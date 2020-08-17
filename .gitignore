@@ -1,0 +1,11 @@
+# Pycharm
+.idea*
+*__pycache__*
+
+# Python
+venv*
+
+# pooltool_telegram_bot
+*.sqlite*
+tickers*
+files/

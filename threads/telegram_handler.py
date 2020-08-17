@@ -166,7 +166,7 @@ class TelegramHandler:
             count = 0
             pool_ids = ''
             for pool in pool_id:
-                pool_ids = pool_ids + f'{count}. {pool}\n'
+                pool_ids = pool_ids + f'{count}. {pool[:5]}...{pool[len(pool) - 5:]}\n'
                 count += 1
             message = "There's more than one pool with this ticker!\n" \
                       "\n" \

@@ -378,7 +378,7 @@ class EventHandler:
                       f'\n' \
                       f"{text.replace('<br/>', nl)}\n" \
                       f'{hash}\n' \
-                      f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))}"
+                      f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))} UTC"
 
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)

@@ -351,13 +351,37 @@ class EventHandler:
 
     def handle_announcement(self, data):
         pool_id = data['pool']
-        chat_ids = self, db.get_chat_ids_from_pool_id(pool_id)
+        chat_ids = self, self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message = f'\\[ {ticker} ] Announcement {e.globe}\n' \
                       f'\n' \
                       f"{data['text']}"
             self.tg.send_message(message, chat_id)
+
+    def handle_award(self, data):
+        pool_id = data['pool']
+        chat_ids = self, self.db.get_chat_ids_from_pool_id(pool_id)
+        for chat_id in chat_ids:
+            ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
+            message_type = self.db.get_option(chat_id, ticker, 'award')
+            if not message_type:
+                continue
+            award_type = data['LIFETIME_BLOCKS_1']
+            epoch = data['value']
+            text = data['text']
+            hash = data['hash']
+            if award_type == 'LIFETIME_BLOCKS_1':
+                message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
+                          f'\n' \
+                          f'{text}\n' \
+                          f'{hash}\n' \
+                          f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))}"
+
+            if message_type == 2:
+                self.tg.send_message(message, chat_id, silent=True)
+            else:
+                self.tg.send_message(message, chat_id)
 
     def run(self):
         while True:
@@ -396,5 +420,7 @@ class EventHandler:
                 elif body['type'] == 'announcement':
                     self.handle_announcement(data)
                     continue
+                elif body['type'] == 'award':
+                    self.handle_award(data)
 
             time.sleep(0.5)

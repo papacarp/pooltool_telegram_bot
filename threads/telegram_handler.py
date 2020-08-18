@@ -13,8 +13,8 @@ class TelegramHandler:
         self.options_string_builder = {}
         self.options_old = ['See options', 'Block minted', 'Battle', 'Sync status', 'Block adjustment', 'Stake change',
                             'Epoch summary',
-                            'Slot loaded', 'Stake Change Threshold', 'Back']
-        self.options = ['See options', 'Block minted', 'Pool change', 'Stake change', 'Stake Change Threshold', 'Back']
+                            'Slot loaded', 'Stake change threshold', 'Back']
+        self.options = ['See options', 'Block minted', 'Pool change', 'Stake change', 'Stake change threshold', 'Award', 'Back']
         self.states = ['Enable', 'Disable', 'Silence']
 
     def handle_start(self, chat):
@@ -94,8 +94,9 @@ class TelegramHandler:
                              f'\n' \
                              f"Block minted: {self.convert_option_value(self.db.get_option(chat, text[0], 'block_minted'))}\n" \
                              f"Pool change: {self.convert_option_value(self.db.get_option(chat, text[0], 'pool_change'))}\n" \
+                             f"Award: {self.convert_option_value(self.db.get_option(chat, text[0], 'award'))}\n" \
                              f"Stake change: {self.convert_option_value(self.db.get_option(chat, text[0], 'stake_change'))}\n" \
-                             f"Stake Change Threshold: {c.set_prefix(self.db.get_option(chat, text[0], 'stake_change_threshold'))}"
+                             f"Stake change threshold: {c.set_prefix(self.db.get_option(chat, text[0], 'stake_change_threshold'))}"
             return options_string
         return ''
 

@@ -8,11 +8,13 @@ class DBHelper:
         self.conn = sqlite3.connect(dbname, check_same_thread=False)
 
     def setup(self):
-        tblstmt = "CREATE TABLE IF NOT EXISTS items (chat_id INTEGER, ticker TEXT, pool_id text, " \
-                  "delegations integer default 0 ,blocks_minted integer default 0)"
-        itemidx = "CREATE UNIQUE INDEX IF NOT EXISTS itemIndex ON items (chat_id,ticker)"
+        # tblstmt = "CREATE TABLE IF NOT EXISTS items (chat_id INTEGER, ticker TEXT, pool_id text, " \
+        #           "delegations integer default 0 ,blocks_minted integer default 0)"
+        # itemidx = "CREATE UNIQUE INDEX IF NOT EXISTS itemIndex ON items (chat_id,ticker)"
+        # self.conn.execute(tblstmt)
+        # self.conn.execute(itemidx)
+        tblstmt = "DROP TABLE IF EXISTS items"
         self.conn.execute(tblstmt)
-        self.conn.execute(itemidx)
 
         tblstmt = "CREATE TABLE IF NOT EXISTS users (chat_id integer PRIMARY KEY, username text )"
         self.conn.execute(tblstmt)
@@ -47,9 +49,14 @@ class DBHelper:
             print("Assuming threshold columns is already migrated")
 
         try:
-            self.new_userpool_poolchange_column_threshold()
+            self.new_userpool_poolchange_column()
         except Exception as err:
             print("Assuming poolchange columns is already migrated")
+
+        try:
+            self.new_userpool_award_column()
+        except Exception as err:
+            print("Assuming award columns is already migrated")
 
     def get_chat_ids(self):
         stmt = "SELECT chat_id FROM users"
@@ -155,8 +162,13 @@ class DBHelper:
         self.conn.execute(stmt)
         self.conn.commit()
 
-    def new_userpool_poolchange_column_threshold(self):
+    def new_userpool_poolchange_column(self):
         stmt = "ALTER TABLE user_pool ADD pool_change INTEGER DEFAULT 1"
+        self.conn.execute(stmt)
+        self.conn.commit()
+
+    def new_userpool_award_column(self):
+        stmt = "ALTER TABLE user_pool ADD award INTEGER DEFAULT 1"
         self.conn.execute(stmt)
         self.conn.commit()
 

@@ -372,6 +372,7 @@ class EventHandler:
             text = data['text']
             hash = data['hash']
             nl = '\n'
+            image_url = f"https://pooltool.io/{award_type}.png"
             # if award_type == 'LIFETIME_BLOCKS_1':
             message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
                       f'\n' \
@@ -381,8 +382,10 @@ class EventHandler:
 
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
+                self.tg.send_image_remote_file(image_url, chat_id, award_type + '.png')
             else:
                 self.tg.send_message(message, chat_id)
+                self.tg.send_image_remote_file(image_url, chat_id, award_type + '.png')
 
     def run(self):
         while True:

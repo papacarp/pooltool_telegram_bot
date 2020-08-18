@@ -1,6 +1,7 @@
 import requests
 import json
 import urllib
+import io
 
 
 class TelegramHelper:
@@ -65,3 +66,13 @@ class TelegramHelper:
     def remove_keyboard(self, boolean):
         remove_keyboard_reply = {"remove_keyboard": boolean}
         return json.dumps(remove_keyboard_reply)
+
+    def send_image_remote_file(self, img_url, chat_id, photo_name):
+        url = f"{self.URL}sendPhoto"
+        remote_image = requests.get(img_url)
+        photo = io.BytesIO(remote_image.content)
+        photo.name = photo_name
+        files = {'photo': photo}
+        data = {'chat_id': chat_id}
+        r = requests.post(url, files=files, data=data)
+        print(r.status_code, r.reason, r.content)

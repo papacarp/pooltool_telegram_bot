@@ -351,7 +351,7 @@ class EventHandler:
 
     def handle_announcement(self, data):
         pool_id = data['pool']
-        chat_ids = self, self.db.get_chat_ids_from_pool_id(pool_id)
+        chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message = f'\\[ {ticker} ] Announcement {e.globe}\n' \
@@ -361,7 +361,7 @@ class EventHandler:
 
     def handle_award(self, data):
         pool_id = data['pool']
-        chat_ids = self, self.db.get_chat_ids_from_pool_id(pool_id)
+        chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message_type = self.db.get_option(chat_id, ticker, 'award')

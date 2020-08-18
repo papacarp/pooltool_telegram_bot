@@ -367,14 +367,15 @@ class EventHandler:
             message_type = self.db.get_option(chat_id, ticker, 'award')
             if not message_type:
                 continue
-            award_type = data['LIFETIME_BLOCKS_1']
+            award_type = data['award']
             epoch = data['value']
             text = data['text']
             hash = data['hash']
+            nl = '\n'
             # if award_type == 'LIFETIME_BLOCKS_1':
             message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
                       f'\n' \
-                      f'{text}\n' \
+                      f"{text.replace('<br/>', nl)}\n" \
                       f'{hash}\n' \
                       f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))}"
 

@@ -70,7 +70,7 @@ class EventHandler:
             tickers = []
             for player in players:
                 if winner == player['pool']:
-                    tickers.append(self.get_ticker_from_pool_id(player['pool']) + f'{crown}')
+                    tickers.append(self.get_ticker_from_pool_id(player['pool']) + f'{e.crown}')
                 else:
                     tickers.append(self.get_ticker_from_pool_id(player['pool']))
             return ' vs '.join(tickers)
@@ -165,13 +165,13 @@ class EventHandler:
             if int(data['change']['pledge']['old_value']) < int(data['change']['pledge']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.party} Pledge\n" \
                           f"\n" \
-                          f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {ada}\n" \
-                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {ada}"
+                          f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
+                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}"
             else:
                 message = f"\\[ {ticker} ] Pool change {e.warning} Pledge\n" \
                           f"\n" \
-                          f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {ada}\n" \
-                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {ada}"
+                          f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
+                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}"
         for chat_id in chat_ids:
             self.tg.send_message(message, chat_id)
             message_type = self.db.get_option(chat_id, ticker, 'pool_change')
@@ -215,7 +215,7 @@ class EventHandler:
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
-                self.send_message(message, chat_id)
+                self.tg.send_message(message, chat_id)
 
     def handle_stake_change(self, data):
         pool_id = data['pool']
@@ -261,9 +261,9 @@ class EventHandler:
                 if not data['new_status']:
                     message = f'\\[ {ticker} ] Out of sync {e.alert}'
                     if message_type == 2:
-                        self.send_message(message, chat_id, silent=True)
+                        self.tg.send_message(message, chat_id, silent=True)
                     else:
-                        self.send_message(message, chat_id)
+                        self.tg.send_message(message, chat_id)
                 else:
                     message = f'\\[ {ticker} ] Back in sync {e.like}'
                     if message_type == 2:
@@ -285,11 +285,11 @@ class EventHandler:
         if isinstance(epoch_slots, str):
             try:
                 epoch_slots = int(epoch_slots)
-            except Exception as e:
+            except Exception as ex:
                 print("Could not convert to int, trying float")
             try:
                 epoch_slots = int(float(epoch_slots))
-            except Exception as e:
+            except Exception as ex:
                 print("Could not convert to float either. Skipping...")
                 return
         if epoch_slots:

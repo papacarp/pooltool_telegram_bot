@@ -15,6 +15,7 @@ class TelegramHandler:
                             'Epoch summary',
                             'Slot loaded', 'Stake Change Threshold', 'Back']
         self.options = ['See options', 'Block minted', 'Pool change', 'Stake change', 'Stake Change Threshold', 'Back']
+        self.states = ['Enable', 'Disable', 'Silence']
 
     def handle_start(self, chat):
         message = f"{e.globe}Welcome to PoolTool Bot!{e.globe}\n" \
@@ -68,8 +69,7 @@ class TelegramHandler:
         return False
 
     def validate_option_state(self, type):
-        states = ['ENABLE', 'DISABLE', 'SILENCE']
-        if type in states:
+        if type in [x.upper() for x in self.states]:
             return True
         return False
 
@@ -93,7 +93,7 @@ class TelegramHandler:
             options_string = f'\\[ {text[0]} ] Options:\n' \
                              f'\n' \
                              f"Block minted: {self.convert_option_value(self.db.get_option(chat, text[0], 'block_minted'))}\n" \
-                             f"Pool change: {self.convert_option_value(self.db.get_option(chat, text[0], 'pool_change_new'))}\n" \
+                             f"Pool change: {self.convert_option_value(self.db.get_option(chat, text[0], 'pool_change'))}\n" \
                              f"Stake change: {self.convert_option_value(self.db.get_option(chat, text[0], 'stake_change'))}\n" \
                              f"Stake Change Threshold: {c.set_prefix(self.db.get_option(chat, text[0], 'stake_change_threshold'))}"
             return options_string
@@ -191,6 +191,10 @@ class TelegramHandler:
             return
 
         self.on_ticker_valid(text[0], 0, chat, pool_id)
+
+    def send_option_state(self, chat):
+        keyboard = self.tg.build_keyboard(self.states)
+        self.tg.send_message('Select new state', chat, keyboard)
 
     def handle_next_option_step(self, chat, text, tickers):
         next_step = self.options_string_builder[chat]['next']

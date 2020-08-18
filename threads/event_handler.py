@@ -371,12 +371,12 @@ class EventHandler:
             epoch = data['value']
             text = data['text']
             hash = data['hash']
-            if award_type == 'LIFETIME_BLOCKS_1':
-                message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
-                          f'\n' \
-                          f'{text}\n' \
-                          f'{hash}\n' \
-                          f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))}"
+            # if award_type == 'LIFETIME_BLOCKS_1':
+            message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
+                      f'\n' \
+                      f'{text}\n' \
+                      f'{hash}\n' \
+                      f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))}"
 
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)

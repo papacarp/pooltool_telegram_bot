@@ -367,10 +367,11 @@ class EventHandler:
             message_type = self.db.get_option(chat_id, ticker, 'award')
             if not message_type:
                 continue
-            award_type = data['award']
-            epoch = data['value']
-            text = data['text']
-            hash = data['hash']
+            award_data = data['award']
+            award_type = award_data['award']
+            epoch = award_data['value']
+            text = award_data['text']
+            hash = award_data['hash']
             nl = '\n'
             image_url = f"https://pooltool.io/{award_type}.png"
             # if award_type == 'LIFETIME_BLOCKS_1':

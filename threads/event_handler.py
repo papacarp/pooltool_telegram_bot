@@ -183,7 +183,7 @@ class EventHandler:
 
     def handle_block_minted(self, data):
         pool_id = data['pool']
-        nbe = data['nb']
+        nbe = data['nbe']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
@@ -191,7 +191,7 @@ class EventHandler:
             if message_type:
                 message = f'\\[ {ticker} ] New block! {e.fire}\n' \
                           f'\n' \
-                          f'{e.tools} Total blocks: {nbe}'
+                          f'{e.tools} Blocks this epoch: {nbe}'
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
                 else:
@@ -368,25 +368,20 @@ class EventHandler:
             if not message_type:
                 continue
             award_data = data['award']
-            award_type = award_data['award']
-            epoch = award_data['value']
-            text = award_data['text']
-            hash = award_data['hash']
             nl = '\n'
-            image_url = f"https://pooltool.io/{award_type}.png"
-            # if award_type == 'LIFETIME_BLOCKS_1':
+            image_url = f"https://pooltool.io/{award_data['award']}.png"
             message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
                       f'\n' \
-                      f"{text.replace('<br/>', nl)}\n" \
-                      f'{hash}\n' \
-                      f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))} UTC"
+                      f"{award_data['text'].replace('<br/>', nl)}\n" \
+                      f"{award_data['hash']}\n" \
+                      f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(award_data['value']))} UTC"
 
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
-                self.tg.send_image_remote_file(image_url, chat_id, award_type + '.png')
+                self.tg.send_image_remote_file(image_url, chat_id, award_data['award'] + '.png')
             else:
                 self.tg.send_message(message, chat_id)
-                self.tg.send_image_remote_file(image_url, chat_id, award_type + '.png')
+                self.tg.send_image_remote_file(image_url, chat_id, award_data['award'] + '.png')
 
     def run(self):
         while True:

@@ -56,6 +56,9 @@ class EventHandler:
         return 'UNKNOWN'
 
     def handle_battle(self, data):
+        with open('battle', 'w') as f:
+            f.write(data)
+
         def what_battle_type(players):
             slot_check = ''
             for player in players:
@@ -126,6 +129,9 @@ class EventHandler:
                             self.tg.send_message(message, chat_id, disable_web_preview=True)
 
     def handle_wallet_poolchange(self, data):
+        with open('wallet_poolchange', 'w') as f:
+            f.write(data)
+
         pool_id = data['pool']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         if chat_ids:
@@ -182,6 +188,9 @@ class EventHandler:
                     self.tg.send_message(message, chat_id)
 
     def handle_block_minted(self, data):
+        with open('block_minted', 'w') as f:
+            f.write(data)
+
         pool_id = data['pool']
         nbe = data['nbe']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
@@ -218,6 +227,9 @@ class EventHandler:
                 self.tg.send_message(message, chat_id)
 
     def handle_stake_change(self, data):
+        with open('stake_change', 'w') as f:
+            f.write(data)
+
         pool_id = data['pool']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         if chat_ids:
@@ -230,6 +242,9 @@ class EventHandler:
                                              message_type, threshold)
 
     def handle_block_adjustment(self, data):
+        with open('block_adjustment', 'w') as f:
+            f.write(data)
+
         if data['old_epoch_blocks'] == data['new_epoch_blocks']:
             return
         pool_id = data['pool']
@@ -252,6 +267,9 @@ class EventHandler:
                     self.tg.send_message(message, chat_id)
 
     def handle_sync_status(self, data):
+        with open('sync_status', 'w') as f:
+            f.write(data)
+
         pool_id = data['pool']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
@@ -272,6 +290,9 @@ class EventHandler:
                         self.tg.send_message(message, chat_id)
 
     def handle_epoch_summary(self, data):
+        with open('epoch_summary', 'w') as f:
+            f.write(data)
+
         pool_id = data['pool']
         delegations = data['liveStake'] / 1000000
         rewards_stakers = data['value_for_stakers'] / 1000000
@@ -331,6 +352,9 @@ class EventHandler:
                     self.tg.send_message(message, chat_id)
 
     def handle_slot_loaded(self, data):
+        with open('slot_loaded', 'w') as f:
+            f.write(data)
+
         pool_id = data['poolid']
         epoch = data['epoch']
         slots_assigned = data['epochSlots']

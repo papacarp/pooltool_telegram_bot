@@ -63,6 +63,11 @@ class DBHelper:
         args = ()
         return [x[0] for x in self.conn.execute(stmt, args)]
 
+    def get_unique_chat_ids_user_pool(self):
+        stmt = "SELECT count(DISTINCT chat_id) FROM user_pool"
+        args = ()
+        return [x[0] for x in self.conn.execute(stmt, args)]
+
     def add_user(self, chat_id, username):
         stmt = "INSERT INTO users (chat_id, username) VALUES (?, ?)"
         args = (chat_id, username)
@@ -87,13 +92,13 @@ class DBHelper:
         args = (pool_id, ticker)
         return [x[0] for x in self.conn.execute(stmt, args)][0]
 
-    def get_option(self, chat_id, ticker, option_type):
+    def get_option_value(self, chat_id, ticker, option_type):
         stmt = f"SELECT {option_type} FROM user_pool WHERE chat_id = (?) AND ticker = (?)"
         args = (chat_id, ticker)
         try:
             return [x[0] for x in self.conn.execute(stmt, args)][0]
         except Exception as e:
-            print(f'Could not get options for: {chat_id}, {ticker}, {option_type}')
+            print(f'Could not get options for: {chat_id}, {ticker}, {option_type} - ERROR : {e}')
 
     def update_option(self, chat_id, ticker, option_type, value):
         stmt = f"UPDATE user_pool SET {option_type} = (?) WHERE chat_id = (?) AND ticker = (?)"

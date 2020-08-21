@@ -38,7 +38,7 @@ class TelegramHelper:
             update_ids.append(int(update["update_id"]))
         return max(update_ids)
 
-    def send_message(self, text, chat_id, reply_markup=None, silent=None, disable_web_preview=None):
+    def send_message(self, text, chat_id, reply_markup=None, silent=None, disable_web_preview=True):
         text = urllib.parse.quote_plus(text)
         url = self.URL + "sendMessage?text={}&chat_id={}&parse_mode=Markdown".format(text, chat_id)
         if reply_markup:

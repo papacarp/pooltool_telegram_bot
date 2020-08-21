@@ -233,6 +233,7 @@ class EventHandler:
                           f'\n' \
                           f"{e.tools} Blocks this epoch: {data['nbe']}\n" \
                           f"{e.brick} Total blocks: {data['nb']}\n" \
+                          f"\n" \
                           f"More info:\n" \
                           f"{pooltool_url}\n" \
                           f'#{ticker}'

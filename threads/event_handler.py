@@ -99,13 +99,14 @@ class EventHandler:
                     ticker = self.db.get_ticker_from_pool_id(player['pool'])[0]
                     message_type = self.db.get_option_value(chat_id, ticker, 'battle')
                     if message_type:
-                        message = f'\\[ #{ticker} ] You won! {e.throphy}\n' \
+                        message = f'\\[ {ticker} ] You won! {e.throphy}\n' \
                                   f'\n' \
                                   f'{e.swords}{battle_type} battle: {competitors}\n' \
                                   f'{e.clock} Slot: {slots}\n' \
                                   f'{e.brick} Height: {height}\n' \
                                   f'\n' \
-                                  f'https://pooltool.io/competitive'
+                                  f'https://pooltool.io/competitive\n' \
+                                  f'#{ticker}'
                         if message_type == 2:
                             self.tg.send_message(message, chat_id, silent=True, disable_web_preview=True)
                         else:
@@ -116,13 +117,14 @@ class EventHandler:
                     ticker = self.db.get_ticker_from_pool_id(player['pool'])[0]
                     message_type = self.db.get_option_value(chat_id, ticker, 'battle')
                     if message_type:
-                        message = f'\\[ #{ticker} ] You lost! {e.annoyed}\n' \
+                        message = f'\\[ {ticker} ] You lost! {e.annoyed}\n' \
                                   f'\n' \
                                   f'{e.swords} {battle_type} battle: {competitors}\n' \
                                   f'{e.clock} Slot: {slots}\n' \
                                   f'{e.brick} Height: {height}\n' \
                                   f'\n' \
-                                  f'https://pooltool.io/competitive'
+                                  f'https://pooltool.io/competitive \n' \
+                                  f'#{ticker}'
                         if message_type == 2:
                             self.tg.send_message(message, chat_id, silent=True, disable_web_preview=True)
                         else:
@@ -141,43 +143,50 @@ class EventHandler:
         if 'ticker' in data['change']:
             new_ticker = data['change']['ticker']['new_value']
             self.db.update_ticker(pool_id, new_ticker)
-            message = f"\\[ #{ticker} ] Pool change {e.warning} Ticker\n" \
+            message = f"\\[ {ticker} ] Pool change {e.warning} Ticker\n" \
                       f"\n" \
                       f"From: {data['change']['ticker']['old_value']}\n" \
-                      f"To: {data['change']['ticker']['new_value']}"
+                      f"To: {data['change']['ticker']['new_value']}\n" \
+                      f"#{ticker}"
         elif 'cost' in data['change']:
             if int(data['change']['cost']['old_value']) < int(data['change']['cost']['new_value']):
-                message = f"\\[ #{ticker} ] Pool change {e.warning} Fixed cost\n" \
+                message = f"\\[ {ticker} ] Pool change {e.warning} Fixed cost\n" \
                           f"\n" \
                           f"From: {data['change']['cost']['old_value']} {e.ada}\n" \
-                          f"To: {data['change']['cost']['new_value']} {e.ada}"
+                          f"To: {data['change']['cost']['new_value']} {e.ada}\n" \
+                          f"#{ticker}"
             else:
-                message = f"\\[ #{ticker} ] Pool change {e.party} Fixed cost\n" \
+                message = f"\\[ {ticker} ] Pool change {e.party} Fixed cost\n" \
                           f"\n" \
                           f"From: {data['change']['cost']['old_value']} {e.ada}\n" \
-                          f"To: {data['change']['cost']['new_value']} {e.ada}"
+                          f"To: {data['change']['cost']['new_value']} {e.ada}\n" \
+                          f"#{ticker}"
         elif 'margin' in data['change']:
             if float(data['change']['margin']['old_value']) < float(data['change']['margin']['new_value']):
-                message = f"\\[ #{ticker} ] Pool change {e.warning} Margin\n" \
+                message = f"\\[ {ticker} ] Pool change {e.warning} Margin\n" \
                           f"\n" \
                           f"From: {float(data['change']['margin']['old_value']) * 100}%\n" \
-                          f"To: {float(data['change']['margin']['new_value']) * 100}%"
+                          f"To: {float(data['change']['margin']['new_value']) * 100}%\n" \
+                          f"#{ticker}"
             else:
-                message = f"\\[ #{ticker} ] Pool change {e.party} Margin\n" \
+                message = f"\\[ {ticker} ] Pool change {e.party} Margin\n" \
                           f"\n" \
                           f"From: {float(data['change']['margin']['old_value']) * 100}%\n" \
-                          f"To: {float(data['change']['margin']['new_value']) * 100}%"
+                          f"To: {float(data['change']['margin']['new_value']) * 100}%\n" \
+                          f"#{ticker}"
         elif 'pledge' in data['change']:
             if int(data['change']['pledge']['old_value']) < int(data['change']['pledge']['new_value']):
-                message = f"\\[ #{ticker} ] Pool change {e.party} Pledge\n" \
+                message = f"\\[ {ticker} ] Pool change {e.party} Pledge\n" \
                           f"\n" \
                           f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
-                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}"
+                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}\n" \
+                          f"#{ticker}"
             else:
-                message = f"\\[ #{ticker} ] Pool change {e.warning} Pledge\n" \
+                message = f"\\[ {ticker} ] Pool change {e.warning} Pledge\n" \
                           f"\n" \
                           f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
-                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}"
+                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}\n" \
+                          f"#{ticker}"
         for chat_id in chat_ids:
             self.tg.send_message(message, chat_id)
             message_type = self.db.get_option_value(chat_id, ticker, 'pool_change')
@@ -192,15 +201,16 @@ class EventHandler:
             f.write(json.dumps(data))
 
         pool_id = data['pool']
-        nbe = data['nbe']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message_type = self.db.get_option_value(chat_id, ticker, 'block_minted')
             if message_type:
-                message = f'\\[ #{ticker} ] New block! {e.fire}\n' \
+                message = f'\\[ {ticker} ] New block! {e.fire}\n' \
                           f'\n' \
-                          f'{e.tools} Blocks this epoch: {nbe}'
+                          f"{e.tools} Blocks this epoch: {data['nbe']}\n" \
+                          f"{e.brick} Total blocks: {data['nb']}\n" \
+                          f'#{ticker}'
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
                 else:
@@ -210,17 +220,19 @@ class EventHandler:
         if abs(delegations - new_delegations) < threshold or abs(delegations - new_delegations) < 1:
             return
         if delegations > new_delegations:
-            message = f'\\[ #{ticker} ] Stake decreased 💔\n' \
+            message = f'\\[ {ticker} ] Stake decreased 💔\n' \
                       f'-{c.set_prefix(round(delegations - new_delegations))} {e.ada}\n' \
-                      f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}'
+                      f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}\n' \
+                      f'#{ticker}'
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
                 self.tg.send_message(message, chat_id)
         elif delegations < new_delegations:
-            message = f'\\[ #{ticker} ] Stake increased 💚\n' \
+            message = f'\\[ {ticker} ] Stake increased 💚\n' \
                       f'+{c.set_prefix(round(new_delegations - delegations))} {e.ada}\n' \
-                      f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}'
+                      f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}\n' \
+                      f'#{ticker}'
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
@@ -254,13 +266,14 @@ class EventHandler:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message_type = self.db.get_option_value(chat_id, ticker, 'block_adjustment')
             if message_type:
-                message = f'\\[ #{ticker} ] Block adjustment{e.warning}\n' \
+                message = f'\\[ {ticker} ] Block adjustment{e.warning}\n' \
                           f'\n' \
                           f"Total blocks has changed: {data['old_epoch_blocks']} to {data['new_epoch_blocks']}\n" \
                           f"Epoch: {current_epoch}\n" \
                           f"\n" \
                           f"More info:\n" \
-                          f"https://pooltool.io/"
+                          f"https://pooltool.io/\n" \
+                          f"#{ticker}"
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
                 else:
@@ -277,13 +290,13 @@ class EventHandler:
             message_type = self.db.get_option_value(chat_id, ticker, 'sync_status')
             if message_type:
                 if not data['new_status']:
-                    message = f'\\[ #{ticker} ] Out of sync {e.alert}'
+                    message = f'\\[ {ticker} ] Out of sync {e.alert}'
                     if message_type == 2:
                         self.tg.send_message(message, chat_id, silent=True)
                     else:
                         self.tg.send_message(message, chat_id)
                 else:
-                    message = f'\\[ #{ticker} ] Back in sync {e.like}'
+                    message = f'\\[ {ticker} ] Back in sync {e.like}'
                     if message_type == 2:
                         self.tg.send_message(message, chat_id, silent=True)
                     else:
@@ -333,7 +346,7 @@ class EventHandler:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message_type = self.db.get_option_value(chat_id, ticker, 'epoch_summary')
             if message_type:
-                message = f'\\[ #{ticker} ] Epoch {last_epoch} stats {e.globe}\n' \
+                message = f'\\[ {ticker} ] Epoch {last_epoch} stats {e.globe}\n' \
                           f'\n' \
                           f'{e.meat} Live stake {c.set_prefix(delegations)}\n' \
                           f"{e.tools} Blocks created: {blocks_minted}{blocks_created_text}\n" \
@@ -345,7 +358,8 @@ class EventHandler:
                           f'Current ROS: {current_ros}%\n' \
                           f'\n' \
                           f'More info at:\n' \
-                          f'https://pooltool.io/pool/{pool_id}/'
+                          f'https://pooltool.io/pool/{pool_id}/\n' \
+                          f'#{ticker}'
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
                 else:
@@ -364,10 +378,11 @@ class EventHandler:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message_type = self.db.get_option_value(chat_id, ticker, 'slot_loaded')
             if message_type:
-                message = f'\\[ #{ticker} ] Epoch {epoch} {e.dice}\n' \
+                message = f'\\[ {ticker} ] Epoch {epoch} {e.dice}\n' \
                           f'\n' \
                           f'Blocks assigned: {slots_assigned}\n' \
-                          f'Last epoch validated: {last_epoch_validated}'
+                          f'Last epoch validated: {last_epoch_validated}\n' \
+                          f'#{ticker}'
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
                 else:
@@ -378,9 +393,10 @@ class EventHandler:
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
-            message = f'\\[ #{ticker} ] Announcement {e.globe}\n' \
+            message = f'\\[ {ticker} ] Announcement {e.globe}\n' \
                       f'\n' \
-                      f"{data['text']}"
+                      f"{data['text']}\n" \
+                      f"#{ticker}"
             self.tg.send_message(message, chat_id)
 
     def handle_award(self, data):
@@ -394,11 +410,12 @@ class EventHandler:
             award_data = data['award']
             nl = '\n'
             image_url = f"https://pooltool.io/{award_data['award']}.png"
-            message = f'\\[ #{ticker} ] Award! {e.throphy}\n' \
+            message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
                       f'\n' \
                       f"{award_data['text'].replace('<br/>', nl)}\n" \
                       f"{award_data['hash']}\n" \
-                      f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(award_data['value']))} UTC"
+                      f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(award_data['value']))} UTC\n" \
+                      f"#{ticker}"
 
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)

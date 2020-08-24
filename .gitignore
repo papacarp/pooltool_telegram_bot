@@ -9,4 +9,5 @@ venv*
 *.sqlite*
 tickers*
 files/
+test/
 ext*

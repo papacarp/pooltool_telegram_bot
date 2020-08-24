@@ -58,6 +58,11 @@ class DBHelper:
         except Exception as err:
             print("Assuming award columns is already migrated")
 
+        try:
+            self.new_userpool_block_estimation_column()
+        except Exception as err:
+            print("Assuming block_estimation columns is already migrated")
+
     def get_chat_ids(self):
         stmt = "SELECT chat_id FROM users"
         args = ()
@@ -174,6 +179,11 @@ class DBHelper:
 
     def new_userpool_award_column(self):
         stmt = "ALTER TABLE user_pool ADD award INTEGER DEFAULT 1"
+        self.conn.execute(stmt)
+        self.conn.commit()
+
+    def new_userpool_block_estimation_column(self):
+        stmt = "ALTER TABLE user_pool ADD block_estimation INTEGER DEFAULT 1"
         self.conn.execute(stmt)
         self.conn.commit()
 

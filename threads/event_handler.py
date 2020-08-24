@@ -1,9 +1,11 @@
 import time
-
 import boto3
 import json
+import matplotlib.pyplot as plt
 import math
+import io
 
+from scipy.stats import binom
 from os import environ
 
 from modules.emoji import Emoji as e
@@ -149,8 +151,8 @@ class EventHandler:
                       f"From: {data['change']['ticker']['old_value']}\n" \
                       f"To: {data['change']['ticker']['new_value']}\n" \
                       f"\n" \
-                      f"More info:\n" \
-                      f"{pooltool_url}\n" \
+                      f"More info at:\n" \
+                      f"[Pooltool]({pooltool_url})\n" \
                       f"#{ticker}"
         elif 'cost' in data['change']:
             if int(data['change']['cost']['old_value']) < int(data['change']['cost']['new_value']):
@@ -159,8 +161,8 @@ class EventHandler:
                           f"From: {data['change']['cost']['old_value']} {e.ada}\n" \
                           f"To: {data['change']['cost']['new_value']} {e.ada}\n" \
                           f"\n" \
-                          f"More info:\n" \
-                          f"{pooltool_url}\n" \
+                          f"More info at:\n" \
+                          f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
             else:
                 message = f"\\[ {ticker} ] Pool change {e.party} Fixed cost\n" \
@@ -168,8 +170,8 @@ class EventHandler:
                           f"From: {data['change']['cost']['old_value']} {e.ada}\n" \
                           f"To: {data['change']['cost']['new_value']} {e.ada}\n" \
                           f"\n" \
-                          f"More info:\n" \
-                          f"{pooltool_url}\n" \
+                          f"More info at:\n" \
+                          f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
         elif 'margin' in data['change']:
             if float(data['change']['margin']['old_value']) < float(data['change']['margin']['new_value']):
@@ -178,8 +180,8 @@ class EventHandler:
                           f"From: {float(data['change']['margin']['old_value']) * 100}%\n" \
                           f"To: {float(data['change']['margin']['new_value']) * 100}%\n" \
                           f"\n" \
-                          f"More info:\n" \
-                          f"{pooltool_url}\n" \
+                          f"More info at:\n" \
+                          f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
             else:
                 message = f"\\[ {ticker} ] Pool change {e.party} Margin\n" \
@@ -187,8 +189,8 @@ class EventHandler:
                           f"From: {float(data['change']['margin']['old_value']) * 100}%\n" \
                           f"To: {float(data['change']['margin']['new_value']) * 100}%\n" \
                           f"\n" \
-                          f"More info:\n" \
-                          f"{pooltool_url}\n" \
+                          f"More info at:\n" \
+                          f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
         elif 'pledge' in data['change']:
             if int(data['change']['pledge']['old_value']) < int(data['change']['pledge']['new_value']):
@@ -197,8 +199,8 @@ class EventHandler:
                           f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
                           f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}\n" \
                           f"\n" \
-                          f"More info:\n" \
-                          f"{pooltool_url}\n" \
+                          f"More info at:\n" \
+                          f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
             else:
                 message = f"\\[ {ticker} ] Pool change {e.warning} Pledge\n" \
@@ -206,8 +208,8 @@ class EventHandler:
                           f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
                           f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}\n" \
                           f"\n" \
-                          f"More info:\n" \
-                          f"{pooltool_url}\n" \
+                          f"More info at:\n" \
+                          f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
         for chat_id in chat_ids:
             self.tg.send_message(message, chat_id)
@@ -234,8 +236,8 @@ class EventHandler:
                           f"{e.tools} Blocks this epoch: {data['nbe']}\n" \
                           f"{e.brick} Total blocks: {data['nb']}\n" \
                           f"\n" \
-                          f"More info:\n" \
-                          f"{pooltool_url}\n" \
+                          f"More info at:\n" \
+                          f"[Pooltool]({pooltool_url})\n" \
                           f'#{ticker}'
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
@@ -250,8 +252,8 @@ class EventHandler:
                       f'-{c.set_prefix(round(delegations - new_delegations))} {e.ada}\n' \
                       f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}\n' \
                       f'\n' \
-                      f'More info:\n' \
-                      f'{pooltool_url}\n' \
+                      f'More info at:\n' \
+                      f'[Pooltool]({pooltool_url})\n' \
                       f'#{ticker}'
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
@@ -262,8 +264,8 @@ class EventHandler:
                       f'+{c.set_prefix(round(new_delegations - delegations))} {e.ada}\n' \
                       f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}\n' \
                       f'\n' \
-                      f'Moreinfo:\n' \
-                      f'{pooltool_url}\n' \
+                      f'More info at:\n' \
+                      f'[Pooltool]({pooltool_url})\n' \
                       f'#{ticker}'
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
@@ -304,7 +306,7 @@ class EventHandler:
                           f"Total blocks has changed: {data['old_epoch_blocks']} to {data['new_epoch_blocks']}\n" \
                           f"Epoch: {current_epoch}\n" \
                           f"\n" \
-                          f"More info:\n" \
+                          f"More info at:\n" \
                           f"https://pooltool.io/\n" \
                           f"#{ticker}"
                 if message_type == 2:
@@ -391,7 +393,7 @@ class EventHandler:
                           f'Current ROS: {current_ros}%\n' \
                           f'\n' \
                           f'More info at:\n' \
-                          f'https://pooltool.io/pool/{pool_id}/\n' \
+                          f'[Pooltool](https://pooltool.io/pool/{pool_id})/\n' \
                           f'#{ticker}'
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
@@ -457,6 +459,42 @@ class EventHandler:
                 self.tg.send_message(message, chat_id)
                 self.tg.send_image_remote_file(image_url, chat_id, award_data['award'] + '.png')
 
+    def handle_block_estimation(self, data):
+        pool_id = data['pool']
+        chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
+        for chat_id in chat_ids:
+            ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
+            message_type = self.db.get_option_value(chat_id, ticker, 'block_estimation')
+            if not message_type:
+                continue
+
+            active_stake = data['active_stake']
+            pool_stake = data['pool_stake']
+            d = data['d']
+            epoch = data['epoch']
+
+            total_block = 21600
+            n = total_block * (1 - d)
+            p = pool_stake / active_stake
+            var = n * p * (1 - p)
+
+            r_values = list(range(int(var * 2 + 1) if var > 1 else 10 + 1))
+
+            dist = [binom.pmf(r, n, p) * 100 for r in r_values]
+
+            plt.title(f'{ticker} Epoch {epoch}: # of expected block')
+            plt.xlabel('Number of blocks')
+            plt.ylabel('Probability in %')
+            plt.bar(r_values, dist)
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+
+            if message_type == 2:
+                self.tg.send_image(buf, chat_id)
+            else:
+                self.tg.send_image(buf, chat_id)
+
     def run(self):
         while True:
             event = self.get_aws_event()
@@ -496,5 +534,7 @@ class EventHandler:
                     continue
                 elif body['type'] == 'award':
                     self.handle_award(data)
+                elif body['type'] == 'block_estimation':
+                    self.handle_block_estimation(data)
 
             time.sleep(0.5)

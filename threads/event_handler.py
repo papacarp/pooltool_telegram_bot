@@ -482,7 +482,7 @@ class EventHandler:
 
             dist = [binom.pmf(r, n, p) * 100 for r in r_values]
 
-            plt.title(f'{ticker} Epoch {epoch}: # of expected block')
+            plt.title(f'{ticker} Epoch {epoch}: # of expected blocks')
             plt.xlabel('Number of blocks')
             plt.ylabel('Probability in %')
             plt.bar(r_values, dist)

@@ -8,10 +8,11 @@ class TelegramHelper:
     def __init__(self):
         self.TOKEN = open('files/token', 'r').read()
         self.URL = "https://api.telegram.org/bot{}/".format(self.TOKEN)
+        self.s = requests.session()
 
     def get_url(self, url):
         try:
-            response = requests.get(url)
+            response = self.s.get(url)
         except requests.exceptions.RequestException as e:
             return ''
         content = response.content.decode("utf8")

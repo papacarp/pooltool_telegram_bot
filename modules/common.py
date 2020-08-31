@@ -58,12 +58,13 @@ def handle_wallet_newpool(data):
                             tickers[ticker].append(pool_id)
 
             # Cleanup pool ids which doesn't exist any more
+            tmp_tickers = tickers
             for ticker in tickers:
                 if ticker not in reverse_dic:
-                    del tickers[ticker]
+                    del tmp_tickers[ticker]
                 else:
                     for pool_id in tickers[ticker]:
                         if pool_id not in data:
-                            tickers[ticker].remove(pool_id)
-
+                            tmp_tickers[ticker].remove(pool_id)
+            tickers = tmp_tickers
             json.dump(tickers, reverse_f)

@@ -46,6 +46,7 @@ def handle_wallet_newpool(data):
                 reverse_dic[data[pool]['ticker'].upper()] = reverse_dic.get(data[pool]['ticker'].upper(), [])
                 reverse_dic[data[pool]['ticker'].upper()].append(pool)
 
+            # Append all new tickers/pool_ids to the reversed ticker file
             for ticker in reverse_dic:
                 if ticker not in tickers:
                     tickers[ticker] = tickers.get(ticker, [])
@@ -55,5 +56,14 @@ def handle_wallet_newpool(data):
                     for pool_id in reverse_dic[ticker]:
                         if pool_id not in tickers[ticker]:
                             tickers[ticker].append(pool_id)
+
+            # Cleanup pool ids which doesn't exist any more
+            for ticker in tickers:
+                if ticker not in reverse_dic:
+                    del tickers[ticker]
+                else:
+                    for pool_id in tickers[ticker]:
+                        if pool_id not in data:
+                            tickers[ticker].remove(pool_id)
 
             json.dump(tickers, reverse_f)

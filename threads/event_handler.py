@@ -50,6 +50,9 @@ class EventHandler:
             ReceiptHandle=receipt_handle
         )
 
+    def get_current_time_millis(self):
+        return int(round(time.time() * 1000))
+
     def get_ticker_from_pool_id_file(self, pool_id):
         with open(c.ticker_file_path, 'r') as ticker_file:
             tickers = json.load(ticker_file)
@@ -244,7 +247,8 @@ class EventHandler:
                 else:
                     self.tg.send_message(message, chat_id)
 
-    def check_delegation_changes(self, chat_id, ticker, delegations, new_delegations, message_type, threshold, pooltool_url):
+    def check_delegation_changes(self, chat_id, ticker, delegations, new_delegations, message_type, threshold,
+                                 pooltool_url):
         if abs(delegations - new_delegations) < threshold or abs(delegations - new_delegations) < 1:
             return
         if delegations > new_delegations:
@@ -285,8 +289,9 @@ class EventHandler:
                 message_type = self.db.get_option_value(chat_id, ticker, 'stake_change')
                 if message_type:
                     threshold = self.db.get_option_value(chat_id, ticker, 'stake_change_threshold')
-                    self.check_delegation_changes(chat_id, ticker, data['old_stake'] / 1000000, data['livestake'] / 1000000,
-                                             message_type, threshold, pooltool_url)
+                    self.check_delegation_changes(chat_id, ticker, data['old_stake'] / 1000000,
+                                                  data['livestake'] / 1000000,
+                                                  message_type, threshold, pooltool_url)
 
     def handle_block_adjustment(self, data):
         with open('block_adjustment', 'w') as f:
@@ -498,45 +503,40 @@ class EventHandler:
                     self.tg.send_image(buf, chat_id)
 
     def run(self):
+        get_event_millis = self.get_current_time_millis()
         while True:
             event = self.get_aws_event()
             if event != '':
+                print(f"{body['type']} - time since last event: {self.get_current_time_millis() - get_event_millis}")
+                get_event_millis = self.get_current_time_millis()
                 self.delete_aws_event_from_queue(event['ReceiptHandle'])
                 body = json.loads(event['Body'])
                 data = body['data']
+                handle_event_millis = self.get_current_time_millis()
                 if body['type'] == 'battle':
                     self.handle_battle(data)
-                    continue
-                if body['type'] == 'wallet_poolchange':
+                elif body['type'] == 'wallet_poolchange':
                     self.handle_wallet_poolchange(data)
-                    continue
                 elif body['type'] == 'wallet_newpool':
                     c.handle_wallet_newpool(data)
-                    continue
                 elif body['type'] == 'block_minted':
                     self.handle_block_minted(data)
-                    continue
                 elif body['type'] == 'stake_change':
                     self.handle_stake_change(data)
-                    continue
                 elif body['type'] == 'block_adjustment':
                     self.handle_block_adjustment(data)
-                    continue
                 elif body['type'] == 'sync_change':
                     self.handle_sync_status(data)
-                    continue
                 elif body['type'] == 'epoch_summary':
                     self.handle_epoch_summary(data)
-                    continue
                 elif body['type'] == 'slots_loaded':
                     self.handle_slot_loaded(data)
-                    continue
                 elif body['type'] == 'announcement':
                     self.handle_announcement(data)
-                    continue
                 elif body['type'] == 'award':
                     self.handle_award(data)
                 elif body['type'] == 'block_estimation':
                     self.handle_block_estimation(data)
+                print(f"Time it took to handle event: {self.get_current_time_millis() - handle_event_millis}")
 
             time.sleep(0.5)

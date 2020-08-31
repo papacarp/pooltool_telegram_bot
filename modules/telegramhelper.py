@@ -81,4 +81,3 @@ class TelegramHelper:
         files = {'photo': image}
         data = {'chat_id': chat_id}
         r = requests.post(url, files=files, data=data)
-        print(r.status_code, r.reason, r.content)

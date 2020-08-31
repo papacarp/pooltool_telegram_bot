@@ -142,7 +142,10 @@ class TelegramHandler:
         return tickers.get(ticker)
 
     def on_ticker_valid(self, ticker, number, chat, pool_id):
-        self.db.add_new_pool(pool_id[number], ticker)
+        try:
+            self.db.update_ticker(pool_id[number], ticker)
+        except Exception as e:
+            self.db.add_new_pool(pool_id[number], ticker)
         try:
             self.db.add_new_user_pool(chat, pool_id[number], ticker)
         except Exception as e:

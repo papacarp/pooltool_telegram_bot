@@ -462,11 +462,8 @@ class EventHandler:
     def handle_block_estimation(self, data):
         pool_id = data['pool']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
-        for chat_id in chat_ids:
+        if chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
-            message_type = self.db.get_option_value(chat_id, ticker, 'block_estimation')
-            if not message_type:
-                continue
 
             active_stake = data['active_stake']
             pool_stake = data['pool_stake']
@@ -482,6 +479,7 @@ class EventHandler:
 
             dist = [binom.pmf(r, n, p) * 100 for r in r_values]
 
+            plt.clf()
             plt.title(f'{ticker} Epoch {epoch}: # of expected blocks')
             plt.xlabel('Number of blocks')
             plt.ylabel('Probability in %')
@@ -490,10 +488,14 @@ class EventHandler:
             plt.savefig(buf, format='png')
             buf.seek(0)
 
-            if message_type == 2:
-                self.tg.send_image(buf, chat_id)
-            else:
-                self.tg.send_image(buf, chat_id)
+            for chat_id in chat_ids:
+                message_type = self.db.get_option_value(chat_id, ticker, 'block_estimation')
+                if not message_type:
+                    continue
+                if message_type == 2:
+                    self.tg.send_image(buf, chat_id)
+                else:
+                    self.tg.send_image(buf, chat_id)
 
     def run(self):
         while True:

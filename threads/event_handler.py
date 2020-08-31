@@ -285,9 +285,6 @@ class EventHandler:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
                 self.tg.send_message(message, chat_id)
-        if c.DEBUG:
-            print(f"Sending message: {self.get_current_time_millis() - stake_millis}")
-            stake_millis = self.get_current_time_millis()
 
     def handle_stake_change(self, data):
         if c.DEBUG:
@@ -313,7 +310,6 @@ class EventHandler:
 
             if c.DEBUG:
                 print(f"getting ticker from db: {self.get_current_time_millis() - stake_millis}")
-                stake_millis = self.get_current_time_millis()
 
             for chat_id in chat_ids:
                 message_type = self.db.get_option_value(chat_id, ticker, 'stake_change')
@@ -322,7 +318,6 @@ class EventHandler:
                     self.check_delegation_changes(chat_id, ticker, data['old_stake'] / 1000000,
                                                   data['livestake'] / 1000000,
                                                   message_type, threshold, pooltool_url)
-
 
     def handle_block_adjustment(self, data):
         with open('block_adjustment', 'w') as f:
@@ -533,6 +528,33 @@ class EventHandler:
                 else:
                     self.tg.send_image(buf, chat_id)
 
+    def handle_event(self, body):
+        data = body['data']
+        if body['type'] == 'battle':
+            self.handle_battle(data)
+        elif body['type'] == 'wallet_poolchange':
+            self.handle_wallet_poolchange(data)
+        elif body['type'] == 'wallet_newpool':
+            c.handle_wallet_newpool(data)
+        elif body['type'] == 'block_minted':
+            self.handle_block_minted(data)
+        elif body['type'] == 'stake_change':
+            self.handle_stake_change(data)
+        elif body['type'] == 'block_adjustment':
+            self.handle_block_adjustment(data)
+        elif body['type'] == 'sync_change':
+            self.handle_sync_status(data)
+        elif body['type'] == 'epoch_summary':
+            self.handle_epoch_summary(data)
+        elif body['type'] == 'slots_loaded':
+            self.handle_slot_loaded(data)
+        elif body['type'] == 'announcement':
+            self.handle_announcement(data)
+        elif body['type'] == 'award':
+            self.handle_award(data)
+        elif body['type'] == 'block_estimation':
+            self.handle_block_estimation(data)
+
     def run(self):
         if c.DEBUG:
             get_event_millis = self.get_current_time_millis()
@@ -542,40 +564,18 @@ class EventHandler:
             if event != '':
 
                 if c.DEBUG:
-                    print(f"{body['type']} - time since last event: {self.get_current_time_millis() - get_event_millis}")
+                    print(f"New event - time since last event: {self.get_current_time_millis() - get_event_millis}")
                     get_event_millis = self.get_current_time_millis()
 
                 self.delete_aws_event_from_queue(event['ReceiptHandle'])
-                body = json.loads(event['Body'])
-                data = body['data']
 
                 if c.DEBUG:
                     handle_event_millis = self.get_current_time_millis()
 
-                if body['type'] == 'battle':
-                    self.handle_battle(data)
-                elif body['type'] == 'wallet_poolchange':
-                    self.handle_wallet_poolchange(data)
-                elif body['type'] == 'wallet_newpool':
-                    c.handle_wallet_newpool(data)
-                elif body['type'] == 'block_minted':
-                    self.handle_block_minted(data)
-                elif body['type'] == 'stake_change':
-                    self.handle_stake_change(data)
-                elif body['type'] == 'block_adjustment':
-                    self.handle_block_adjustment(data)
-                elif body['type'] == 'sync_change':
-                    self.handle_sync_status(data)
-                elif body['type'] == 'epoch_summary':
-                    self.handle_epoch_summary(data)
-                elif body['type'] == 'slots_loaded':
-                    self.handle_slot_loaded(data)
-                elif body['type'] == 'announcement':
-                    self.handle_announcement(data)
-                elif body['type'] == 'award':
-                    self.handle_award(data)
-                elif body['type'] == 'block_estimation':
-                    self.handle_block_estimation(data)
+                event_handler = threading.Thread(target=self.handle_event, args=(json.loads(event['Body']),))
+                event_handler.start()
+
+                # self.handle_event(json.loads(event['Body']))
 
                 if c.DEBUG:
                     print(f"Time it took to handle event: {self.get_current_time_millis() - handle_event_millis}")

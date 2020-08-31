@@ -3,6 +3,8 @@ import json
 import urllib
 import io
 
+import modules.common as c
+
 
 class TelegramHelper:
     def __init__(self):
@@ -40,6 +42,9 @@ class TelegramHelper:
         return max(update_ids)
 
     def send_message(self, text, chat_id, reply_markup=None, silent=None, disable_web_preview=True):
+        if c.DEBUG:
+            millis = self.get_current_time_millis()
+
         text = urllib.parse.quote_plus(text)
         url = self.URL + "sendMessage?text={}&chat_id={}&parse_mode=Markdown".format(text, chat_id)
         if reply_markup:
@@ -49,6 +54,9 @@ class TelegramHelper:
         if disable_web_preview:
             url += f"&disable_web_page_preview={disable_web_preview}"
         self.get_url(url)
+
+        if c.DEBUG:
+            print(f"Sending message: {self.get_current_time_millis() - millis}")
 
     def build_keyboard(self, items):
         keyboard = []
@@ -78,7 +86,13 @@ class TelegramHelper:
         r = requests.post(url, files=files, data=data)
 
     def send_image(self, image, chat_id):
+        if c.DEBUG:
+            millis = self.get_current_time_millis()
+
         url = f"{self.URL}sendPhoto"
         files = {'photo': image}
         data = {'chat_id': chat_id}
         r = requests.post(url, files=files, data=data)
+
+        if c.DEBUG:
+            print(f"Sending photo: {self.get_current_time_millis() - millis}")

@@ -249,6 +249,8 @@ class EventHandler:
 
     def check_delegation_changes(self, chat_id, ticker, delegations, new_delegations, message_type, threshold,
                                  pooltool_url):
+        stake_millis = self.get_current_time_millis()
+
         if abs(delegations - new_delegations) < threshold or abs(delegations - new_delegations) < 1:
             return
         if delegations > new_delegations:
@@ -259,6 +261,8 @@ class EventHandler:
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
                       f'#{ticker}'
+            print(f"creating message: {self.get_current_time_millis() - stake_millis}")
+            stake_millis = self.get_current_time_millis()
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
@@ -271,20 +275,37 @@ class EventHandler:
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
                       f'#{ticker}'
+            print(f"creating message: {self.get_current_time_millis() - stake_millis}")
+            stake_millis = self.get_current_time_millis()
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
                 self.tg.send_message(message, chat_id)
+        print(f"Sending message: {self.get_current_time_millis() - stake_millis}")
+        stake_millis = self.get_current_time_millis()
 
     def handle_stake_change(self, data):
+        stake_millis = self.get_current_time_millis()
+
         with open('stake_change', 'w') as f:
             f.write(json.dumps(data))
+
+        print(f"write to file: {self.get_current_time_millis() - stake_millis}")
+        stake_millis = self.get_current_time_millis()
 
         pool_id = data['pool']
         pooltool_url = f'https://pooltool.io/pool/{pool_id}/delegators'
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
+
+        print(f"getting chat ids from db: {self.get_current_time_millis() - stake_millis}")
+        stake_millis = self.get_current_time_millis()
+
         if chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
+
+            print(f"getting ticker from db: {self.get_current_time_millis() - stake_millis}")
+            stake_millis = self.get_current_time_millis()
+
             for chat_id in chat_ids:
                 message_type = self.db.get_option_value(chat_id, ticker, 'stake_change')
                 if message_type:
@@ -292,6 +313,7 @@ class EventHandler:
                     self.check_delegation_changes(chat_id, ticker, data['old_stake'] / 1000000,
                                                   data['livestake'] / 1000000,
                                                   message_type, threshold, pooltool_url)
+
 
     def handle_block_adjustment(self, data):
         with open('block_adjustment', 'w') as f:

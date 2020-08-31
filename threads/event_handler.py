@@ -507,10 +507,10 @@ class EventHandler:
         while True:
             event = self.get_aws_event()
             if event != '':
+                body = json.loads(event['Body'])
                 print(f"{body['type']} - time since last event: {self.get_current_time_millis() - get_event_millis}")
                 get_event_millis = self.get_current_time_millis()
                 self.delete_aws_event_from_queue(event['ReceiptHandle'])
-                body = json.loads(event['Body'])
                 data = body['data']
                 handle_event_millis = self.get_current_time_millis()
                 if body['type'] == 'battle':

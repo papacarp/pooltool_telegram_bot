@@ -51,9 +51,6 @@ class EventHandler:
             ReceiptHandle=receipt_handle
         )
 
-    def get_current_time_millis(self):
-        return int(round(time.time() * 1000))
-
     def get_ticker_from_pool_id_file(self, pool_id):
         with open(c.ticker_file_path, 'r') as ticker_file:
             tickers = json.load(ticker_file)
@@ -251,7 +248,7 @@ class EventHandler:
     def check_delegation_changes(self, chat_id, ticker, delegations, new_delegations, message_type, threshold,
                                  pooltool_url):
         if c.DEBUG:
-            stake_millis = self.get_current_time_millis()
+            stake_millis = c.get_current_time_millis()
 
         if abs(delegations - new_delegations) < threshold or abs(delegations - new_delegations) < 1:
             return
@@ -264,8 +261,8 @@ class EventHandler:
                       f'[Pooltool]({pooltool_url})\n' \
                       f'#{ticker}'
             if c.DEBUG:
-                print(f"creating message: {self.get_current_time_millis() - stake_millis}")
-                stake_millis = self.get_current_time_millis()
+                print(f"creating message: {c.get_current_time_millis() - stake_millis}")
+                stake_millis = c.get_current_time_millis()
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
@@ -279,8 +276,8 @@ class EventHandler:
                       f'[Pooltool]({pooltool_url})\n' \
                       f'#{ticker}'
             if c.DEBUG:
-                print(f"creating message: {self.get_current_time_millis() - stake_millis}")
-                stake_millis = self.get_current_time_millis()
+                print(f"creating message: {c.get_current_time_millis() - stake_millis}")
+                stake_millis = c.get_current_time_millis()
             if message_type == 2:
                 self.tg.send_message(message, chat_id, silent=True)
             else:
@@ -288,28 +285,28 @@ class EventHandler:
 
     def handle_stake_change(self, data):
         if c.DEBUG:
-            stake_millis = self.get_current_time_millis()
+            stake_millis = c.get_current_time_millis()
 
         with open('stake_change', 'w') as f:
             f.write(json.dumps(data))
 
         if c.DEBUG:
-            print(f"write to file: {self.get_current_time_millis() - stake_millis}")
-            stake_millis = self.get_current_time_millis()
+            print(f"write to file: {c.get_current_time_millis() - stake_millis}")
+            stake_millis = c.get_current_time_millis()
 
         pool_id = data['pool']
         pooltool_url = f'https://pooltool.io/pool/{pool_id}/delegators'
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
 
         if c.DEBUG:
-            print(f"getting chat ids from db: {self.get_current_time_millis() - stake_millis}")
-            stake_millis = self.get_current_time_millis()
+            print(f"getting chat ids from db: {c.get_current_time_millis() - stake_millis}")
+            stake_millis = c.get_current_time_millis()
 
         if chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
 
             if c.DEBUG:
-                print(f"getting ticker from db: {self.get_current_time_millis() - stake_millis}")
+                print(f"getting ticker from db: {c.get_current_time_millis() - stake_millis}")
 
             for chat_id in chat_ids:
                 message_type = self.db.get_option_value(chat_id, ticker, 'stake_change')
@@ -557,20 +554,20 @@ class EventHandler:
 
     def run(self):
         if c.DEBUG:
-            get_event_millis = self.get_current_time_millis()
+            get_event_millis = c.get_current_time_millis()
 
         while True:
             event = self.get_aws_event()
             if event != '':
 
                 if c.DEBUG:
-                    print(f"New event - time since last event: {self.get_current_time_millis() - get_event_millis}")
-                    get_event_millis = self.get_current_time_millis()
+                    print(f"New event - time since last event: {c.get_current_time_millis() - get_event_millis}")
+                    get_event_millis = c.get_current_time_millis()
 
                 self.delete_aws_event_from_queue(event['ReceiptHandle'])
 
                 if c.DEBUG:
-                    handle_event_millis = self.get_current_time_millis()
+                    handle_event_millis = c.get_current_time_millis()
 
                 event_handler = threading.Thread(target=self.handle_event, args=(json.loads(event['Body']),))
                 event_handler.start()
@@ -578,6 +575,6 @@ class EventHandler:
                 # self.handle_event(json.loads(event['Body']))
 
                 if c.DEBUG:
-                    print(f"Time it took to handle event: {self.get_current_time_millis() - handle_event_millis}")
+                    print(f"Time it took to handle event: {c.get_current_time_millis() - handle_event_millis}")
 
             time.sleep(0.5)

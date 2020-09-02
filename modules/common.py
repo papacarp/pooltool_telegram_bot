@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import time
 
 from si_prefix import si_format
 
@@ -17,6 +18,8 @@ if not os.path.isfile(ticker_reverse_file_path):
     with open(ticker_reverse_file_path, 'w') as f:
         f.write('{}')
 
+def get_current_time_millis(self):
+    return int(round(time.time() * 1000))
 
 def set_prefix(number):
     if number < 1000:

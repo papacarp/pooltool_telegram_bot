@@ -43,7 +43,7 @@ class TelegramHelper:
 
     def send_message(self, text, chat_id, reply_markup=None, silent=None, disable_web_preview=True):
         if c.DEBUG:
-            millis = self.get_current_time_millis()
+            millis = c.get_current_time_millis()
 
         text = urllib.parse.quote_plus(text)
         url = self.URL + "sendMessage?text={}&chat_id={}&parse_mode=Markdown".format(text, chat_id)
@@ -56,7 +56,7 @@ class TelegramHelper:
         self.get_url(url)
 
         if c.DEBUG:
-            print(f"Sending message: {self.get_current_time_millis() - millis}")
+            print(f"Sending message: {c.get_current_time_millis() - millis}")
 
     def build_keyboard(self, items):
         keyboard = []
@@ -87,7 +87,7 @@ class TelegramHelper:
 
     def send_image(self, image, chat_id):
         if c.DEBUG:
-            millis = self.get_current_time_millis()
+            millis = c.get_current_time_millis()
 
         url = f"{self.URL}sendPhoto"
         files = {'photo': image}
@@ -95,4 +95,4 @@ class TelegramHelper:
         r = requests.post(url, files=files, data=data)
 
         if c.DEBUG:
-            print(f"Sending photo: {self.get_current_time_millis() - millis}")
+            print(f"Sending photo: {c.get_current_time_millis() - millis}")

@@ -572,10 +572,10 @@ class EventHandler:
                 if c.DEBUG:
                     handle_event_millis = self.get_current_time_millis()
 
-                event_handler = threading.Thread(target=self.handle_event, args=(json.loads(event['Body']),))
-                event_handler.start()
+                # event_handler = threading.Thread(target=self.handle_event, args=(json.loads(event['Body']),))
+                # event_handler.start()
 
-                # self.handle_event(json.loads(event['Body']))
+                self.handle_event(json.loads(event['Body']))
 
                 if c.DEBUG:
                     print(f"Time it took to handle event: {self.get_current_time_millis() - handle_event_millis}")

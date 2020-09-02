@@ -4,7 +4,7 @@ import os
 
 from si_prefix import si_format
 
-DEBUG = 0
+DEBUG = 1
 
 ticker_file_path = 'files/tickers.json'
 ticker_reverse_file_path = 'files/tickers_reverse.json'

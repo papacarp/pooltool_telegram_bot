@@ -18,7 +18,7 @@ if not os.path.isfile(ticker_reverse_file_path):
     with open(ticker_reverse_file_path, 'w') as f:
         f.write('{}')
 
-def get_current_time_millis(self):
+def get_current_time_millis():
     return int(round(time.time() * 1000))
 
 def set_prefix(number):

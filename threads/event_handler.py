@@ -305,6 +305,7 @@ class EventHandler:
             stake_millis = c.get_current_time_millis()
 
         if chat_ids:
+            print(f"Getting ticker for pool id: {pool_id}")
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
 
             if c.DEBUG:

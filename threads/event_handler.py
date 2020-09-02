@@ -24,6 +24,8 @@ class EventHandler:
         self.sqs = boto3.client('sqs')
         self.queue_url = 'https://sqs.us-west-2.amazonaws.com/637019325511/pooltoolevents.fifo'
 
+        self.plot_number = 0
+
     def get_aws_event(self):
         try:
             response = self.sqs.receive_message(
@@ -507,19 +509,20 @@ class EventHandler:
 
             dist = [binom.pmf(r, n, p) * 100 for r in r_values]
 
-            plt.figure()
+            plt.figure(self.plot_number)
+            self.plot_number = self.plot_number + 1
             plt.title(f'{ticker} Epoch {epoch}: # of expected blocks')
             plt.xlabel('Number of blocks')
             plt.ylabel('Probability in %')
             plt.bar(r_values, dist)
             buf = io.BytesIO()
             plt.savefig(buf, format='png')
-            buf.seek(0)
 
             for chat_id in chat_ids:
                 message_type = self.db.get_option_value(chat_id, ticker, 'block_estimation')
                 if not message_type:
                     continue
+                buf.seek(0)
                 if message_type == 2:
                     self.tg.send_image(buf, chat_id)
                 else:

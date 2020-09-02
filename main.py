@@ -7,8 +7,6 @@ from modules.telegramhelper import TelegramHelper
 from threads.telegram_handler import TelegramHandler
 from threads.event_handler import EventHandler
 
-#import test_db
-
 
 def main():
     db = DBHelper()

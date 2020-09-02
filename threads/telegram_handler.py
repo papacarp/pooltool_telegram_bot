@@ -145,7 +145,11 @@ class TelegramHandler:
         try:
             self.db.update_ticker(pool_id[number], ticker)
         except Exception as e:
+            print("Assuming ticker does not exist.. adding to db")
+        try:
             self.db.add_new_pool(pool_id[number], ticker)
+        except Exception as e:
+            print("Assuiming pool is already added")
         try:
             self.db.add_new_user_pool(chat, pool_id[number], ticker)
         except Exception as e:

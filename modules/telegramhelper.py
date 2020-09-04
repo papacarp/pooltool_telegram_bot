@@ -8,7 +8,7 @@ import modules.common as c
 
 class TelegramHelper:
     def __init__(self):
-        self.TOKEN = open('files/token_test', 'r').read()
+        self.TOKEN = open('files/token', 'r').read()
         self.URL = "https://api.telegram.org/bot{}/".format(self.TOKEN)
         self.s = requests.session()
 

@@ -136,6 +136,10 @@ class DBHelper:
         args = (chat_id,)
         return [x[0] for x in self.conn.execute(stmt, args)]
 
+    def get_all_subscribed_pool(self):
+        stmt = "SELECT pool_id FROM user_pool"
+        return [x[0] for x in self.conn.execute(stmt,)]
+
     def add_new_user_pool(self, chat_id, pool_id, ticker):
         stmt = "INSERT INTO user_pool (chat_id, pool_id, ticker) VALUES (?, ?, ?)"
         args = (chat_id, pool_id, ticker)
@@ -149,22 +153,22 @@ class DBHelper:
         self.conn.commit()
 
     def update_ticker(self, pool_id, new_ticker):
-        stmt = f"UPDATE pools SET ticker = (?) WHERE pool_id = (?)"
+        stmt = "UPDATE pools SET ticker = (?) WHERE pool_id = (?)"
         args = (new_ticker, pool_id)
         self.conn.execute(stmt, args)
 
-        stmt = f"UPDATE user_pool SET ticker = (?) WHERE pool_id = (?)"
+        stmt = "UPDATE user_pool SET ticker = (?) WHERE pool_id = (?)"
         args = (new_ticker, pool_id)
         self.conn.execute(stmt, args)
 
         self.conn.commit()
 
     def update_poolid(self, new_pool_id, ticker):
-        stmt = f"UPDATE pools SET pool_id = (?) WHERE ticker = (?)"
+        stmt = "UPDATE pools SET pool_id = (?) WHERE ticker = (?)"
         args = (new_pool_id, ticker)
         self.conn.execute(stmt, args)
 
-        stmt = f"UPDATE user_pool SET pool_id = (?) WHERE ticker = (?)"
+        stmt = "UPDATE user_pool SET pool_id = (?) WHERE ticker = (?)"
         args = (new_pool_id, ticker)
         self.conn.execute(stmt, args)
 

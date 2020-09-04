@@ -535,7 +535,7 @@ class EventHandler:
         elif body['type'] == 'wallet_poolchange':
             self.handle_wallet_poolchange(data)
         elif body['type'] == 'wallet_newpool':
-            c.handle_wallet_newpool(data)
+            c.handle_wallet_newpool(self.db)
         elif body['type'] == 'block_minted':
             self.handle_block_minted(data)
         elif body['type'] == 'stake_change':

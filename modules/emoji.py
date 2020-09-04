@@ -25,3 +25,4 @@ class Emoji:
     dice = '🎲'
     crown = '👑'
     party = '🥳'
+    pointDown = '👇'

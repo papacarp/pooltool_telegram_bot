@@ -38,44 +38,15 @@ def get_new_ticker_file():
         return 'error'
 
 
-def handle_wallet_newpool(data):
-    with open(ticker_file_path, 'w') as f:
-        data = get_new_ticker_file()
+def handle_wallet_newpool(db):
+    data = get_new_ticker_file()
 
-        if data != 'error':
-            json.dump(data, f)
+    for poolid in data:
 
-        with open(ticker_reverse_file_path, 'r') as ticker:
-            tickers = json.load(ticker)
+        if db.does_pool_id_exist(poolid):
+            if not db.does_pool_ticker_exist(poolid, data[poolid]['ticker']):
+                db.update_ticker(poolid, data[poolid]['ticker'])
+        else:
+            db.add_new_pool(poolid, data[poolid]['ticker'])
 
-        reverse_dic = {}
-        for pool in data:
-            reverse_dic[data[pool]['ticker'].upper()] = reverse_dic.get(data[pool]['ticker'].upper(), [])
-            reverse_dic[data[pool]['ticker'].upper()].append(pool)
-
-        # Append all new tickers/pool_ids to the reversed ticker file
-        for ticker in reverse_dic:
-            if ticker not in tickers:
-                tickers[ticker] = tickers.get(ticker, [])
-                for pool_id in reverse_dic[ticker]:
-                    tickers[ticker].append(pool_id)
-            else:
-                for pool_id in reverse_dic[ticker]:
-                    if pool_id not in tickers[ticker]:
-                        tickers[ticker].append(pool_id)
-
-        # Cleanup pool ids which doesn't exist any more
-        tmp_tickers = dict(tickers)
-
-        for ticker in tickers:
-            if ticker not in reverse_dic:
-                del tmp_tickers[ticker]
-            else:
-                for pool_id in tickers[ticker]:
-                    if pool_id not in data:
-                        tmp_tickers[ticker].remove(pool_id)
-
-        tickers = tmp_tickers
-
-        with open(ticker_reverse_file_path, 'w') as reverse_f:
-            json.dump(tickers, reverse_f)
+    print("DB is updated")

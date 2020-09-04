@@ -92,6 +92,11 @@ class DBHelper:
             self.conn.execute(stmt, args)
             self.conn.commit()
 
+    def does_pool_id_exist(self, pool_id):
+        stmt = "SELECT count(*) FROM pools WHERE pool_id = (?)"
+        args = (pool_id,)
+        return [x[0] for x in self.conn.execute(stmt, args)][0]
+
     def does_pool_ticker_exist(self, pool_id, ticker):
         stmt = "SELECT count(*) FROM pools WHERE pool_id = (?) AND ticker = (?)"
         args = (pool_id, ticker)
@@ -117,8 +122,13 @@ class DBHelper:
         return [x[0] for x in self.conn.execute(stmt, args)]
 
     def get_ticker_from_pool_id(self, pool_id):
-        stmt = "SELECT ticker FROM pools WHERE pool_id = (?)"
+        stmt = "SELECT ticker FROM pools WHERE pool_id = (?) COLLATE NOCASE"
         args = (pool_id,)
+        return [x[0] for x in self.conn.execute(stmt, args)]
+
+    def get_pool_id_from_ticker(self, ticker):
+        stmt = "SELECT pool_id FROM pools WHERE ticker = (?)"
+        args = (ticker,)
         return [x[0] for x in self.conn.execute(stmt, args)]
 
     def get_tickers_from_chat_id(self, chat_id):

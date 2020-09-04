@@ -158,45 +158,77 @@ class TelegramHandler:
         message = "List of pools you watch:\n\n" + "\n".join(tickers)
         self.tg.send_message(message, chat)
 
-    def handle_duplicate_ticker(self, text, chat, pool_id):
-        if len(text) > 1:
-            try:
-                number = int(text[1])
-                if len(pool_id) > number >= 0:
-                    text = f'{text[0]} {text[1]}'
-                    self.on_ticker_valid(text, number, chat, pool_id)
-                else:
-                    raise Exception("Please enter a number that fit the provided listing!")
-            except Exception as e:
-                message = "Please enter a valid ticker"
-                self.tg.send_message(message, chat)
+    def handle_duplicate_ticker(self, text, chat, pool_id, type):
+        if type == 'adding_duplicate':
+            if text == 'QUIT':
+                del self.options_string_builder[chat]
+                tickers = self.db.get_tickers_from_chat_id(chat)
+                message = "List of pools you watch:\n\n" + "\n".join(tickers)
+                self.tg.send_message(message, chat, self.tg.remove_keyboard(True))
                 return
+            else:
+                self.handle_new_pool_id(text, chat)
+                keyboard = self.tg.build_keyboard(self.options_string_builder[chat]['pool_ids'])
+                message = "Do you want to add more?"
+                self.tg.send_message(message, chat, keyboard)
         else:
-            count = 0
-            pool_ids = ''
-            for pool in pool_id:
-                pool_ids = pool_ids + f'{count}. {pool[:5]}...{pool[len(pool) - 5:]}\n'
-                count += 1
-            message = "There's more than one pool with this ticker!\n" \
+            message = f"There's more than one pool with ticker {text[0]}!\n" \
                       "\n" \
-                      f"{pool_ids}\n" \
-                      f"Please specify which pool you want listed, eg.\n" \
-                      f"{text[0]} x, where x is the listing number"
+                      f"Please specify which pool you want listed, by using the keyboard {e.pointDown}"
+            pool_id.append('QUIT')
+            keyboard = self.tg.build_keyboard(pool_id)
+            self.tg.send_message(message, chat, keyboard)
+            self.options_string_builder[chat] = {}
+            self.options_string_builder[chat]['type'] = 'adding_duplicate'
+            self.options_string_builder[chat]['pool_ids'] = pool_id
+        # if len(text) > 1:
+        #     try:
+        #         number = int(text[1])
+        #         if len(pool_id) > number >= 0:
+        #             text = f'{text[0]} {text[1]}'
+        #             self.on_ticker_valid(text, number, chat, pool_id)
+        #         else:
+        #             raise Exception("Please enter a number that fit the provided listing!")
+        #     except Exception as e:
+        #         message = "Please enter a valid ticker"
+        #         self.tg.send_message(message, chat)
+        #         return
+        # else:
+        #     count = 0
+        #     pool_ids = ''
+        #     for pool in pool_id:
+        #         pool_ids = pool_ids + f'{count}. {pool[:5]}...{pool[len(pool) - 5:]}\n'
+        #         count += 1
+        #     message = "There's more than one pool with this ticker!\n" \
+        #               "\n" \
+        #               f"{pool_ids}\n" \
+        #               f"Please specify which pool you want listed, eg.\n" \
+        #               f"{text[0]} x, where x is the listing number"
+        #     self.tg.send_message(message, chat)
+
+    def handle_new_pool_id(self, pool_id, chat):
+        try:
+            ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
+        except Exception as e:
+            message = "Not a valid pool id!:"
             self.tg.send_message(message, chat)
+            return
+        self.db.add_new_user_pool(chat, pool_id, ticker)
+        tickers = self.db.get_tickers_from_chat_id(chat)
 
     def handle_new_ticker(self, text, chat):
         text = text.split(' ')
-        pool_id = self.get_pool_id_from_ticker_file(text[0])
+        pool_id = self.db.get_pool_id_from_ticker(text[0])
 
-        if pool_id is None:
-            c.handle_wallet_newpool(None)
-            pool_id = self.get_pool_id_from_ticker_file(text[0])
-            if pool_id is None:
+        if not pool_id :
+            c.handle_wallet_newpool(self.db)
+            pool_id = self.db.get_pool_id_from_ticker(text[0])
+            if not pool_id:
                 message = "This is not a valid TICKER!"
                 self.tg.send_message(message, chat)
                 return
         if len(pool_id) > 1:
-            self.handle_duplicate_ticker(text, chat, pool_id)
+            self.handle_duplicate_ticker(text, chat, pool_id, None)
             return
 
         self.on_ticker_valid(text[0], 0, chat, pool_id)
@@ -296,7 +328,10 @@ class TelegramHandler:
 
                     tickers = self.db.get_tickers_from_chat_id(chat)
                     if chat in self.options_string_builder:
-                        self.handle_next_option_step(chat, text, tickers)
+                        if self.options_string_builder[chat]['type'] == 'adding_duplicate':
+                            self.handle_duplicate_ticker(text, chat, None, self.options_string_builder[chat]['type'])
+                        else:
+                            self.handle_next_option_step(chat, text, tickers)
                         continue
                     if text == "/DELETE":
                         if not tickers:

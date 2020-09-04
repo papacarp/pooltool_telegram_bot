@@ -7,10 +7,14 @@ from modules.telegramhelper import TelegramHelper
 from threads.telegram_handler import TelegramHandler
 from threads.event_handler import EventHandler
 
+from modules import common as c
+
 
 def main():
     db = DBHelper()
     db.setup()
+
+    c.handle_wallet_newpool(db)
 
     tg = TelegramHelper()
 

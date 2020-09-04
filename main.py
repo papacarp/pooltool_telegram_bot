@@ -15,6 +15,13 @@ def main():
     db = DBHelper()
     db.setup()
 
+    pools = db.get_all_pools()
+    for pool in pools:
+        try:
+            db.delete_pool(pool)
+        except Exception as e:
+            print("Could not delete pool")
+
     c.handle_wallet_newpool(db)
 
     tg = TelegramHelper()

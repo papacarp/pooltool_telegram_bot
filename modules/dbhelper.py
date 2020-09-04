@@ -140,6 +140,10 @@ class DBHelper:
         stmt = "SELECT pool_id FROM user_pool"
         return [x[0] for x in self.conn.execute(stmt,)]
 
+    def get_all_pools(self):
+        stmt = "SELECT pool_id FROM pools"
+        return [x[0] for x in self.conn.execute(stmt,)]
+
     def add_new_user_pool(self, chat_id, pool_id, ticker):
         stmt = "INSERT INTO user_pool (chat_id, pool_id, ticker) VALUES (?, ?, ?)"
         args = (chat_id, pool_id, ticker)
@@ -149,6 +153,12 @@ class DBHelper:
     def delete_user_pool(self, chat_id, ticker):
         stmt = "DELETE FROM user_pool WHERE chat_id = (?) AND ticker = (?)"
         args = (chat_id, ticker)
+        self.conn.execute(stmt, args)
+        self.conn.commit()
+
+    def delete_pool(self, pool_id):
+        stmt = "DELETE FROM pools WHERE pool_id = (?)"
+        args = (pool_id,)
         self.conn.execute(stmt, args)
         self.conn.commit()
 

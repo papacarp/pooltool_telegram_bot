@@ -324,6 +324,10 @@ class TelegramHandler:
             ## Do some help message
             return
         reward_addr = text[1]
+        addr = self.db.get_reward_addr_from_chat_id(chat)
+        if reward_addr in addr:
+            ## Do delete
+            return
         ptdb = pooltool_dbhelper.PoolToolDb()
         if ptdb.does_rewards_addr_exist(reward_addr):
             self.db.add_new_reward_addr(chat, reward_addr)

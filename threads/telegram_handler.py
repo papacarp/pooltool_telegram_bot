@@ -320,6 +320,9 @@ class TelegramHandler:
 
     def handle_reward(self, chat, text):
         text = text.split(' ')
+        if len(text) < 1:
+            ## Do some help message
+            return
         reward_addr = text[1]
         ptdb = pooltool_dbhelper.PoolToolDb()
         if ptdb.does_rewards_addr_exist(reward_addr):

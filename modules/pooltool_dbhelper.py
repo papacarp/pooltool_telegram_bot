@@ -20,6 +20,7 @@ class PoolToolDb:
     def does_rewards_addr_exist(self, addr):
         self.cur.execute("select count(*) from pt_addresses_history where stake_address=%s", [addr])
         row = self.cur.fetchone()
+        print(f"{addr}, {row[0]}")
         if row[0] > 0:
             return True
         else:

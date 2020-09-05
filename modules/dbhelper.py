@@ -155,9 +155,9 @@ class DBHelper:
         stmt = "SELECT pool_id FROM pools"
         return [x[0] for x in self.conn.execute(stmt,)]
 
-    def get_reward_addr_from_chat_id(self, addr):
+    def get_reward_addr_from_chat_id(self, chat_id):
         stmt = "SELECT reward_addr FROM user_reward WHERE chat_id = (?)"
-        args = (addr,)
+        args = (chat_id,)
         return [x[0] for x in self.conn.execute(stmt, args)]
 
     def add_new_user_pool(self, chat_id, pool_id, ticker):

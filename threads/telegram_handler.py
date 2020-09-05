@@ -324,6 +324,12 @@ class TelegramHandler:
         ptdb = pooltool_dbhelper.PoolToolDb()
         if ptdb.does_rewards_addr_exist(reward_addr):
             self.db.add_new_reward_addr(chat, reward_addr)
+            addrs = self.db.get_reward_addr_from_chat_id(chat)
+            message = "List of addresses you watch:\n\n" + "\n".join(addrs)
+            self.tg.send_message(message, chat)
+        else:
+            message = "Not a valid reward address!"
+            self.tg.send_message(message, chat)
 
     def handle_updates(self, updates):
         if 'result' in updates:

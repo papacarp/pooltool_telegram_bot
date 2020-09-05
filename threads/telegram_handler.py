@@ -316,6 +316,9 @@ class TelegramHandler:
                 self.tg.send_message(message, chat)
                 self.send_option_stake_threshold(chat)
 
+    def handle_reward(self, chat, text): 
+        print("hi")
+
     def handle_updates(self, updates):
         if 'result' in updates:
             for update in updates["result"]:
@@ -356,6 +359,8 @@ class TelegramHandler:
                         self.handle_help(chat)
                     elif text == "/OPTION":
                         self.handle_option_start(chat, tickers)
+                    elif "/REWARD" in text:
+                        self.handle_reward(chat, text)
                     elif text.startswith("/"):
                         message = "Unknown command, try /help"
                         self.tg.send_message(message, chat)

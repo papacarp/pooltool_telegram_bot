@@ -9,12 +9,14 @@ from threads.event_handler import EventHandler
 from threads.update_subscribers_on_pooltool import UpdateSubscribers
 
 from modules import common as c
-
+from modules import pooltool_dbhelper
 
 def main():
     db = DBHelper()
     db.setup()
 
+    ptdb = pooltool_dbhelper.PoolToolDb()
+    ptdb.does_rewards_addr_exist('3a603ad222fddbf96c561d5294ef9dc432f8c31aea8d1d510f76cf59')
     # c.clean_up_pools_table(db)
     # c.handle_wallet_newpool(db)
 

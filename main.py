@@ -15,8 +15,8 @@ def main():
     db = DBHelper()
     db.setup()
 
-    ptdb = pooltool_dbhelper.PoolToolDb()
-    ptdb.does_rewards_addr_exist('3a603ad222fddbf96c561d5294ef9dc432f8c31aea8d1d510f76cf59')
+    # ptdb = pooltool_dbhelper.PoolToolDb()
+    # ptdb.does_rewards_addr_exist('3a603ad222fddbf96c561d5294ef9dc432f8c31aea8d1d510f76cf59')
     # c.clean_up_pools_table(db)
     # c.handle_wallet_newpool(db)
 

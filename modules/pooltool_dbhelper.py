@@ -17,7 +17,7 @@ class PoolToolDb:
         self.conn.commit()
 
     def does_rewards_addr_exist(self, addr):
-        self.cur.execute("select * from pt_addresses_history where stake_address=%s",[addr])
+        self.cur.execute("select count(*) from pt_addresses_history where stake_address=%s",[addr])
         row=self.cur.fetchone()
         while row:
             print(row)

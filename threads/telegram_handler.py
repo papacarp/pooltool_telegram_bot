@@ -320,7 +320,7 @@ class TelegramHandler:
 
     def handle_reward(self, chat, text):
         text = text.split(' ')
-        if len(text) < 1:
+        if len(text) < 2:
             ## Do some help message
             return
         reward_addr = text[1]

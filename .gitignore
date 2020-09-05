@@ -11,3 +11,7 @@ tickers*
 files/
 test/
 ext*
+
+
+block_minted
+stake_change

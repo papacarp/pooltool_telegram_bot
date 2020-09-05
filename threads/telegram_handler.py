@@ -1,6 +1,8 @@
 import time
 import json
 
+from modules import pooltool_dbhelper
+
 from modules.emoji import Emoji as e
 from modules import common as c
 
@@ -316,8 +318,12 @@ class TelegramHandler:
                 self.tg.send_message(message, chat)
                 self.send_option_stake_threshold(chat)
 
-    def handle_reward(self, chat, text): 
-        print("hi")
+    def handle_reward(self, chat, text):
+        text = text.split(' ')
+        reward_addr = text[1]
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        if ptdb.does_rewards_addr_exist(reward_addr):
+            self.db.add_new_reward_addr(chat, reward_addr)
 
     def handle_updates(self, updates):
         if 'result' in updates:

@@ -31,6 +31,11 @@ class DBHelper:
                   "FOREIGN KEY (chat_id) REFERENCES users(chat_id) " \
                   "FOREIGN KEY (pool_id,ticker) REFERENCES pools(pool_id,ticker)) "
         self.conn.execute(tblstmt)
+
+        tblstmt = "CREATE TABLE IF NOT EXISTS user_reward (chat_id integer, reward_addr TEXT, " \
+                  "PRIMARY KEY (chat_id, reward_addr) " \
+                  "FOREIGN KEY (chat_id) REFERENCES users(chat_id)) "
+        self.conn.execute(tblstmt)
         self.conn.commit()
 
         try:
@@ -92,6 +97,12 @@ class DBHelper:
             self.conn.execute(stmt, args)
             self.conn.commit()
 
+    def add_new_reward_addr(self, chat_id, addr):
+        stmt = "INSERT INTO user_reward (chat_id, reward_addr) VALUES (?, ?)"
+        args = (chat_id, addr)
+        self.conn.execute(stmt, args)
+        self.conn.commit()
+
     def does_pool_id_exist(self, pool_id):
         stmt = "SELECT count(*) FROM pools WHERE pool_id = (?)"
         args = (pool_id,)
@@ -143,6 +154,11 @@ class DBHelper:
     def get_all_pools(self):
         stmt = "SELECT pool_id FROM pools"
         return [x[0] for x in self.conn.execute(stmt,)]
+
+    def get_ticker_from_pool_id(self, pool_id):
+        stmt = "SELECT reward_addr FROM pools WHERE pool_id = (?) COLLATE NOCASE"
+        args = (pool_id,)
+        return [x[0] for x in self.conn.execute(stmt, args)]
 
     def add_new_user_pool(self, chat_id, pool_id, ticker):
         stmt = "INSERT INTO user_pool (chat_id, pool_id, ticker) VALUES (?, ?, ?)"

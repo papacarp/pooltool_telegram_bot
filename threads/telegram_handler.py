@@ -328,7 +328,7 @@ class TelegramHandler:
 
                     tickers = self.db.get_tickers_from_chat_id(chat)
                     if chat in self.options_string_builder:
-                        if self.options_string_builder[chat]['type'] == 'adding_duplicate':
+                        if 'type' in self.options_string_builder[chat] and self.options_string_builder[chat]['type'] == 'adding_duplicate':
                             self.handle_duplicate_ticker(text, chat, None, self.options_string_builder[chat]['type'])
                         else:
                             self.handle_next_option_step(chat, text, tickers)

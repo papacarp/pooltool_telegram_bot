@@ -50,3 +50,15 @@ def handle_wallet_newpool(db):
             db.add_new_pool(poolid, data[poolid]['ticker'])
 
     print("DB is updated")
+
+
+def clean_up_pools_table(db):
+    pools = db.get_all_pools()
+
+    for pool in pools:
+        try:
+            db.delete_pool(pool)
+        except Exception as e:
+            print("Could not delete pool")
+
+    print("Clean up pools table DONE!")

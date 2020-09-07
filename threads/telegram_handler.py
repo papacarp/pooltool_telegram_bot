@@ -326,7 +326,9 @@ class TelegramHandler:
         reward_addr = text[1]
         addr = self.db.get_reward_addr_from_chat_id(chat)
         if reward_addr in addr:
-            ## Do delete
+            self.db.delete_user_reward(reward_addr)
+            message = "List of addresses you watch:\n\n" + "\n".join(addrs)
+            self.tg.send_message(message, chat)
             return
         ptdb = pooltool_dbhelper.PoolToolDb()
         if ptdb.does_rewards_addr_exist(reward_addr):

@@ -178,6 +178,12 @@ class DBHelper:
         self.conn.execute(stmt, args)
         self.conn.commit()
 
+    def delete_user_reward(self, addr):
+        stmt = "DELETE FROM user_reward WHERE reward_addr = (?)"
+        args = (addr,)
+        self.conn.execute(stmt, args)
+        self.conn.commit()
+
     def update_ticker(self, pool_id, new_ticker):
         stmt = "UPDATE pools SET ticker = (?) WHERE pool_id = (?)"
         args = (new_ticker, pool_id)

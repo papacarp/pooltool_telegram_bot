@@ -1,5 +1,6 @@
 import time
 import json
+import subprocess
 
 from modules import pooltool_dbhelper
 
@@ -41,13 +42,17 @@ class TelegramHandler:
         message = "*Add/Remove pool:*\n" \
                   "Enter ticker of the pool, this will both add the pool to the list or delete if it is already on the list\n" \
                   "\n" \
-                  "Example: KUNO\n" \
+                  "Example: ETR\n" \
                   "\n" \
                   "\n" \
                   "*Options for each pool:*\n" \
                   "You can enable/disable/silent each specific notification you want for each pool on your list\n" \
                   "\n" \
-                  "Enter: /OPTION\n" \
+                  "Enter: /option\n" \
+                  "\n" \
+                  "*Rewards:*\n" \
+                  "\n" \
+                  "Enter: /reward <stake address>\n" \
                   "\n" \
                   "*NOTE: This Bot is not case sensitive! text in upper- and lower case work!*"
         self.tg.send_message(message, chat)
@@ -167,6 +172,11 @@ class TelegramHandler:
                 tickers = self.db.get_tickers_from_chat_id(chat)
                 message = "List of pools you watch:\n\n" + "\n".join(tickers)
                 self.tg.send_message(message, chat, self.tg.remove_keyboard(True))
+                return
+            elif text.lower() not in self.options_string_builder[chat]['pool_ids']:
+                keyboard = self.tg.build_keyboard(self.options_string_builder[chat]['pool_ids'])
+                message = f"Please select a pool id listed below {e.pointDown}"
+                self.tg.send_message(message, chat, keyboard)
                 return
             else:
                 self.handle_new_pool_id(text, chat)
@@ -320,18 +330,35 @@ class TelegramHandler:
 
     def handle_reward(self, chat, text):
         text = text.split(' ')
+        if len(text) == 1:
+            message = "How to add a stake address:\n" \
+                      "/reward <stake address>"
+            self.tg.send_message(message, chat)
+            return
         if len(text) < 2:
             ## Do some help message
             return
-        reward_addr = text[1]
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        reward_addr = text[1].lower()
+        try:
+            reward_addr_json = json.loads(subprocess.check_output(f'echo {reward_addr} | ~/wallet/cardano-wallet-shelley-linux64/cardano-address address inspect', shell=True).decode('utf-8'))
+            stake_key_hash = reward_addr_json['stake_key_hash']
+        except Exception as e:
+            if ptdb.does_rewards_addr_exist(reward_addr):
+                stake_key_hash = reward_addr
+            else:
+                message = "Please use a valid stake address!"
+                print("Please use a valid stake address!")
+                self.tg.send_message(message, chat)
+                return
         addr = self.db.get_reward_addr_from_chat_id(chat)
         if reward_addr in addr:
             self.db.delete_user_reward(reward_addr)
+            addrs = self.db.get_reward_addr_from_chat_id(chat)
             message = "List of addresses you watch:\n\n" + "\n".join(addrs)
             self.tg.send_message(message, chat)
             return
-        ptdb = pooltool_dbhelper.PoolToolDb()
-        if ptdb.does_rewards_addr_exist(reward_addr):
+        if ptdb.does_rewards_addr_exist(stake_key_hash):
             self.db.add_new_reward_addr(chat, reward_addr)
             addrs = self.db.get_reward_addr_from_chat_id(chat)
             message = "List of addresses you watch:\n\n" + "\n".join(addrs)

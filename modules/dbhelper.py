@@ -155,16 +155,23 @@ class DBHelper:
         stmt = "SELECT pool_id FROM pools"
         return [x[0] for x in self.conn.execute(stmt,)]
 
+    def get_all_reward_users(self):
+        stmt = "SELECT DISTINCT chat_id FROM user_reward"
+        return [x[0] for x in self.conn.execute(stmt,)]
+
     def get_reward_addr_from_chat_id(self, chat_id):
         stmt = "SELECT reward_addr FROM user_reward WHERE chat_id = (?)"
         args = (chat_id,)
         return [x[0] for x in self.conn.execute(stmt, args)]
 
     def add_new_user_pool(self, chat_id, pool_id, ticker):
-        stmt = "INSERT INTO user_pool (chat_id, pool_id, ticker) VALUES (?, ?, ?)"
-        args = (chat_id, pool_id, ticker)
-        self.conn.execute(stmt, args)
-        self.conn.commit()
+        try:
+            stmt = "INSERT INTO user_pool (chat_id, pool_id, ticker) VALUES (?, ?, ?)"
+            args = (chat_id, pool_id, ticker)
+            self.conn.execute(stmt, args)
+            self.conn.commit()
+        except:
+            print("new_user_pool error")
 
     def delete_user_pool(self, chat_id, ticker):
         stmt = "DELETE FROM user_pool WHERE chat_id = (?) AND ticker = (?)"

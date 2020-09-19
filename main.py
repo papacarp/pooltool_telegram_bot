@@ -11,12 +11,18 @@ from threads.update_subscribers_on_pooltool import UpdateSubscribers
 from modules import common as c
 from modules import pooltool_dbhelper
 
+
 def main():
     db = DBHelper()
     db.setup()
 
-    # ptdb = pooltool_dbhelper.PoolToolDb()
-    # ptdb.does_rewards_addr_exist('3a603ad222fddbf96c561d5294ef9dc432f8c31aea8d1d510f76cf59')
+    #ptdb = pooltool_dbhelper.PoolToolDb()
+    #reward_addr_json = json.loads(subprocess.check_output(f'echo addr1qx327m9urmgl9fygek5qzdmd9xnxc393ym7fe7t30mr36h3gctxml88r3zt6x3epv3eyylkpv6dz52tp50dere4lnu4spysu54 | ~/wallet/cardano-wallet-shelley-linux64/cardano-address address inspect', shell=True).decode('utf-8'))
+    #stake_key_hash = reward_addr_json['stake_key_hash']
+    #total_stake = ptdb.get_total_stake('4f0ddf015b0fe42ec43deb55151aa408f423fd8514dfc93e951d3e84')
+    #total_stake_rewards = ptdb.get_total_stake_rewards('4f0ddf015b0fe42ec43deb55151aa408f423fd8514dfc93e951d3e84')
+    #print( (total_stake/total_stake_rewards) * 100)
+    #print(ptdb.get_total_stake_rewards('4f0ddf015b0fe42ec43deb55151aa408f423fd8514dfc93e951d3e84'))
     # c.clean_up_pools_table(db)
     # c.handle_wallet_newpool(db)
 

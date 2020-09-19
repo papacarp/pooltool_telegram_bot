@@ -5,6 +5,9 @@
 # Python
 venv*
 
+# Vscode
+.vscode/
+
 # pooltool_telegram_bot
 *.sqlite*
 tickers*
@@ -15,3 +18,8 @@ ext*
 
 block_minted
 stake_change
+slot_loaded
+wallet_poolchange
+stake_change
+
+*.dbhelper.py.swp

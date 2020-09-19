@@ -5,13 +5,19 @@ import matplotlib.pyplot as plt
 import math
 import io
 import threading
+import subprocess
+import plotly.express as px
+import plotly.io
 
 from scipy.stats import binom
 from os import environ
 
 from modules.emoji import Emoji as e
 from modules import common as c
+from modules import pooltool_dbhelper
 
+plotly.io.orca.config.executable = '~/orca'
+plotly.io.orca.config.save()
 
 class EventHandler:
     def __init__(self, db, tg):
@@ -367,7 +373,7 @@ class EventHandler:
                     else:
                         self.tg.send_message(message, chat_id)
 
-    def handle_epoch_summary(self, data):
+    def handle_epoch_summary_old(self, data):
         with open('epoch_summary', 'w') as f:
             f.write(json.dumps(data))
 
@@ -431,6 +437,7 @@ class EventHandler:
                     self.tg.send_message(message, chat_id)
 
     def handle_slot_loaded(self, data):
+        return
         with open('slot_loaded', 'w') as f:
             f.write(json.dumps(data))
 
@@ -527,6 +534,152 @@ class EventHandler:
                     self.tg.send_image(buf, chat_id)
                 else:
                     self.tg.send_image(buf, chat_id)
+    
+    def handle_reward(self, data):
+        epoch = data['epoch']
+        chat_ids = self.db.get_all_reward_users()
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        for chat_id in chat_ids:
+            addrs = self.db.get_reward_addr_from_chat_id(chat_id)
+            for addr in addrs:
+                try:
+                    reward_addr_json = json.loads(subprocess.check_output(f'echo {addr} | ~/wallet/cardano-wallet-shelley-linux64/cardano-address address inspect', shell=True).decode('utf-8'))
+                    stake_key_hash = reward_addr_json['stake_key_hash']
+                except:
+                    if ptdb.does_rewards_addr_exist(addr):
+                        stake_key_hash = addr
+                    else:
+                        continue
+                url = f'https://pooltool.io/address/{stake_key_hash}'
+                reward = ptdb.get_stake_rewards(stake_key_hash, epoch)
+                total_reward = ptdb.get_total_stake_rewards(stake_key_hash)
+                operator_rewards = ptdb.get_operator_rewards(stake_key_hash, epoch)
+                total_operator_rewards = ptdb.get_total_operator_rewards(stake_key_hash)
+                message = f'Rewards! {e.moneyBag} epoch {epoch}\n' \
+                          f'`{addr[:5]}...{addr[len(addr) - 5:]}`\n' \
+                          f'\n'
+                if reward < 1000000:
+                    message += f'Rewards: `{c.set_prefix(round(reward))} Lovelace`\n'
+                else:
+                    message += f'Rewards: `{c.set_prefix(round(reward / 1000000))} {e.ada}`\n'
+                if operator_rewards:
+                    message += f'Operator rewards: `{c.set_prefix(round(operator_rewards / 1000000))} {e.ada}`\n' \
+                               f'Lifetime rewards: `{c.set_prefix(round((total_reward + total_operator_rewards) / 1000000))} {e.ada}`\n'
+                else:
+                    if total_reward < 1000000:
+                        message += f'Lifetime rewards: `{c.set_prefix(round(total_reward))} Lovelace`\n'
+                    else:    
+                        message += f'Lifetime rewards: `{c.set_prefix(round(total_reward / 1000000))} {e.ada}`\n'
+                message += f'\n' \
+                           f'More info at:\n' \
+                           f'[Pooltool]({url})' 
+                self.tg.send_message(message, chat_id)
+
+    def handle_epoch_summary(self, data):
+        pools = self.db.get_all_subscribed_pool()
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        epoch = data['epoch']
+        d = data['d']
+        total_block = 21600
+        total_circ_supply = 31112484646000000
+
+        pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
+        for pool in pools:
+            ticker = self.db.get_ticker_from_pool_id(pool)[0]
+            chat_ids = self.db.get_chat_ids_from_pool_id(pool)  
+            chat_ids = [488598281]
+            
+            #block_stake_epoch = ptdb.get_block_stake_for_epoch(pool, epoch)
+            #blocks_minted = ptdb.get_blocks_minted_for_epoch(pool, epoch)
+            #delegator_rewards = ptdb.get_rewards_for_epoch(pool, epoch - 1)
+            #pool_rewards = ptdb.get_tax_for_epoch(pool, epoch - 1)
+            
+            #livestake = ptdb.get_livestake(pool)
+            #genesis_total_stake = ptdb.get_total_genesis_stake()
+            total_delegators = ptdb.get_total_delegators(pool)
+
+            #current_genesis_epoch = ptdb.get_current_genesis_epoch()
+            #pool_first_epoch = ptdb.get_pool_first_epoch(pool)
+            #pool_lifetime_rewards = int(ptdb.get_pool_lifetime_reward(pool))
+            #pool_lifetime_stake = int(ptdb.get_pool_lifetime_stake(pool))
+            #pool_donestake = ptdb.get_pool_donestake(pool)
+            #block_stake = ptdb.get_pool_blockstake(pool)
+            #forecasted_tax, forecasted_reward = ptdb.get_forecasted_tax_reward(pool, epoch)
+
+            livestake, pool_first_epoch, pool_lifetime_rewards, pool_lifetime_stake, pool_donestake, block_stake = ptdb.get_pools_data_for_summary(pool)
+            block_stake_epoch, blocks_minted, forecasted_tax, forecasted_reward = ptdb.get_pool_epoch_data_for_summary(pool, epoch)
+            delegator_rewards, pool_rewards = ptdb.get_pool_epoch_rewards(pool, epoch - 1)
+            current_genesis_epoch, genesis_total_stake = ptdb.get_genesis_data_for_summary()
+
+            compoundingperiods = (current_genesis_epoch - pool_first_epoch - 1) #fix when epoch is not a day
+            roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
+            ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
+
+            pool_stake = block_stake
+            n = total_block * (1 - d)
+            p = pool_stake / genesis_total_stake
+            var = n * p * (1 - p)
+            r_values = list(range(int(var * 2 + 1) if var > 1 else 10 + 1))
+            dist = [binom.pmf(r, n, p) * 100 for r in r_values]
+            estimated_blocks = round(var, 2)  
+
+            saturation = (pool_stake / (total_circ_supply  / 150)) * 100
+
+            fig = px.bar(x=r_values, y=dist, template='plotly_dark')
+            fig.update_layout(
+                title="{ticker} Epoch {epoch}: # of expected block",
+                xaxis_title="Number of blocks",
+                yaxis_title="Probability in %",
+            )
+            img_bytes = fig.to_image(format="png")
+            #plt.figure(self.plot_number)
+            #self.plot_number = self.plot_number + 1
+            #plt.title(f'{ticker} Epoch {epoch + 1}: # of expected blocks')
+            #plt.xlabel('Number of blocks')
+            #plt.ylabel('Probability in %')
+            #plt.bar(r_values, dist)
+            #buf = io.BytesIO()
+            #plt.savefig(buf, format='png')
+
+            for chat_id in chat_ids:       
+                message_type = self.db.get_option_value(chat_id, ticker, 'epoch_summary')
+
+                if message_type:
+                    message = f'*[ {ticker} ] Epoch {epoch} summary {e.globe}*\n' \
+                            f'\n' \
+                            f'Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch / 1000000))}`\n' \
+                            f'Blocks minted: `{blocks_minted}`\n' \
+                            f'\n' \
+                            f'Live stake: `{e.ada}{c.set_prefix(round(livestake / 1000000))}`\n' \
+                            f'Pool Saturation: `{round(saturation, 2)} %`\n' \
+                            f'Total stakeholders: `{total_delegators}`\n' \
+                            f'\n' \
+                            f'*Rewards for epoch {epoch - 1}*\n' \
+                            f'  Stakeholder rewards: `{e.ada}{c.set_prefix(round(delegator_rewards / 1000000))}`\n' \
+                            f'  Pool rewards: `{e.ada}{c.set_prefix(round(pool_rewards / 1000000))}`\n' \
+                            f'  Stakeholder ROS: `{round(ros * 100, 2)} %`\n' \
+                            f'\n' \
+                            f'*Estimated rewards for epoch {epoch}*\n' \
+                            f'  Stakeholder rewards: `{e.ada}{c.set_prefix(round(forecasted_reward / 1000000))}`\n' \
+                            f'  Pool rewards: `{e.ada}{c.set_prefix(round(forecasted_tax / 1000000))}`\n' \
+                            f'\n' \
+                            f'Estimated blocks epoch {epoch + 1}: `{estimated_blocks}`\n' \
+                            f'\n' \
+                            f'_This Bot is brought to you by_ *[ ETR ]*'
+                    if message_type == 2:
+                        self.tg.send_message(message, chat_id, silent=True)
+                    else:
+                        self.tg.send_message(message, chat_id)
+
+                    message_type = self.db.get_option_value(chat_id, ticker, 'block_estimation')
+                    if not message_type:
+                        continue
+                    #buf.seek(0)
+                    if message_type == 2:
+                        self.tg.send_image(img_bytes, chat_id)
+                    else:
+                        self.tg.send_image(img_bytes, chat_id)
+                        
 
     def handle_event(self, body):
         data = body['data']
@@ -554,6 +707,8 @@ class EventHandler:
             self.handle_award(data)
         elif body['type'] == 'block_estimation':
             self.handle_block_estimation(data)
+        elif body['type'] == 'reward':
+            self.handle_reward(data)
 
     def run(self):
         if c.DEBUG:
@@ -572,10 +727,10 @@ class EventHandler:
                 if c.DEBUG:
                     handle_event_millis = c.get_current_time_millis()
 
-                # event_handler = threading.Thread(target=self.handle_event, args=(json.loads(event['Body']),))
-                # event_handler.start()
+                event_handler = threading.Thread(target=self.handle_event, args=(json.loads(event['Body']),))
+                event_handler.start()
 
-                self.handle_event(json.loads(event['Body']))
+                #self.handle_event(json.loads(event['Body']))
 
                 if c.DEBUG:
                     print(f"Time it took to handle event: {c.get_current_time_millis() - handle_event_millis}")

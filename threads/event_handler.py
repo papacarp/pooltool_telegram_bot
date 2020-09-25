@@ -626,7 +626,7 @@ class EventHandler:
             else:
                 roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
             ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
-            current_ros = math.pow((pool_rewards / block_stake_epoch_prev) + 1, 365 / 5) - 1
+            current_ros = math.pow((delegator_rewards / block_stake_epoch_prev) + 1, 365 / 5) - 1
 
             pool_stake = block_stake
             n = total_block * (1 - d)

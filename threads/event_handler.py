@@ -583,14 +583,14 @@ class EventHandler:
         total_block = 21600
         total_circ_supply = 31112484646000000
 
-        #pools = ['95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443']
+        pools = ['95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443']
         for pool in pools:
             ticker = self.db.get_ticker_from_pool_id(pool)
             if len(ticker) < 1:
                 continue
             ticker = ticker[0]
             chat_ids = self.db.get_chat_ids_from_pool_id(pool)  
-            #chat_ids = [488598281]
+            chat_ids = [488598281]
             
             #block_stake_epoch = ptdb.get_block_stake_for_epoch(pool, epoch)
             #blocks_minted = ptdb.get_blocks_minted_for_epoch(pool, epoch)
@@ -611,15 +611,22 @@ class EventHandler:
 
             livestake, pool_first_epoch, pool_lifetime_rewards, pool_lifetime_stake, pool_donestake, block_stake = ptdb.get_pools_data_for_summary(pool)
             block_stake_epoch, blocks_minted, forecasted_tax, forecasted_reward = ptdb.get_pool_epoch_data_for_summary(pool, epoch)
-            if (block_stake_epoch == -1 and blocks_minted == -1 and forecasted_tax == -1 and forecasted_reward == -1) or (pool_lifetime_stake - pool_donestake - block_stake <= 0):
+            if block_stake_epoch == -1 and blocks_minted == -1 and forecasted_tax == -1 and forecasted_reward == -1:
+                continue
+            block_stake_epoch_prev, blocks_minted_prev, forecasted_tax_prev, forecasted_reward_prev = ptdb.get_pool_epoch_data_for_summary(pool, epoch - 1)
+            if block_stake_epoch_prev == -1 and blocks_minted_prev == -1 and forecasted_tax_prev == -1 and forecasted_reward_prev == -1:
                 continue
             
             delegator_rewards, pool_rewards = ptdb.get_pool_epoch_rewards(pool, epoch - 1)
             current_genesis_epoch, genesis_total_stake = ptdb.get_genesis_data_for_summary()
 
             compoundingperiods = 1 #(current_genesis_epoch - pool_first_epoch - 1) #fix when epoch is not a day
-            roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
+            if pool_lifetime_stake - pool_donestake - block_stake <= 0:
+                roioverspan = 0
+            else:
+                roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
             ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
+            current_ros = math.pow((pool_rewards / block_stake_epoch_prev) + 1, 1 / (compoundingperiods / (365 / 5))) - 1
 
             pool_stake = block_stake
             n = total_block * (1 - d)
@@ -659,14 +666,15 @@ class EventHandler:
                     message += f"Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch / 1000000)).replace(' ', '')}`\n" 
                     message += f'Blocks minted: `{blocks_minted}`\n' 
                     message += f'Total stakeholders: `{total_delegators}`\n' 
-                    message += f'\n' 
+                    message += f'\n'
+                    message += f'Lifetime ROS: `{round(ros * 100, 2)}%`\n'
                     message += f"Live stake: `{e.ada}{c.set_prefix(round(livestake / 1000000)).replace(' ', '')}`\n" 
                     message += f'Pool Saturation: `{round(saturation, 2)}%`\n' 
                     message += f'\n' 
                     message += f'*Rewards for epoch {epoch - 1}*\n' 
                     message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(delegator_rewards / 1000000)).replace(' ', '')}`\n" 
                     message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(pool_rewards / 1000000)).replace(' ', '')}`\n" 
-                    message += f'  Stakeholder ROS: `{round(ros * 100, 2)}%`\n' 
+                    message += f'  Stakeholder ROS: `{round(current_ros * 100, 2)}%`\n'
                     message += f'\n' 
                     message += f'*Estimated rewards for epoch {epoch}*\n' 
                     message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(forecasted_reward / 1000000)).replace(' ', '')}`\n" 

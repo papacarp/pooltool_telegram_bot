@@ -110,8 +110,8 @@ class PoolToolDb:
         row = self.cur.fetchone()
         return row[0]
     
-    def get_total_delegators(self, pool_id):
-        self.cur.execute("select count(distinct \"delegatorKey\") from pool_delegators where \"poolPubKey\"=%s", [pool_id])
+    def get_total_delegators(self, pool_id, epoch):
+        self.cur.execute("select count(distinct \"stake_address\") from pt_addresses_history where \"poolid\"=%s and epoch=%s", [pool_id, epoch])
         row = self.cur.fetchone()
         return row[0]
     
@@ -126,9 +126,13 @@ class PoolToolDb:
         return row['livestake'], row['first_epoch'], int(row['lifetime_rewards']), int(row['lifetime_stake']), row['donestake'], row['blockstake']
 
     def get_pool_epoch_data_for_summary(self, pool_id, epoch):
-        self.cur.execute("select blockstake, epoch_blocks, fcp1_epoch_tax, fcp1_epoch_rewards from pool_epoch_data where \"poolPubKey\"=%s and epoch=%s", [pool_id, epoch])
-        row = self.cur.fetchone()
-        return row['blockstake'], row['epoch_blocks'], row['fcp1_epoch_tax'], row['fcp1_epoch_rewards']
+        try:
+            self.cur.execute("select blockstake, epoch_blocks, fcp1_epoch_tax, fcp1_epoch_rewards from pool_epoch_data where \"poolPubKey\"=%s and epoch=%s", [pool_id, epoch])
+            row = self.cur.fetchone()
+            return row['blockstake'], row['epoch_blocks'], row['fcp1_epoch_tax'], row['fcp1_epoch_rewards']
+        except:
+            print(f"Could not get epoch data for pool; {pool_id}")
+            return -1, -1, -1, -1
     
     def get_pool_epoch_rewards(self, pool_id, epoch):
         self.cur.execute("select epoch_rewards, epoch_tax from pool_epoch_data where \"poolPubKey\"=%s and epoch=%s", [pool_id, epoch])

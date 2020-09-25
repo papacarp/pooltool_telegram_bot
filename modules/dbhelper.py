@@ -133,9 +133,13 @@ class DBHelper:
         return [x[0] for x in self.conn.execute(stmt, args)]
 
     def get_ticker_from_pool_id(self, pool_id):
-        stmt = "SELECT ticker FROM pools WHERE pool_id = (?) COLLATE NOCASE"
-        args = (pool_id,)
-        return [x[0] for x in self.conn.execute(stmt, args)]
+        try:
+            stmt = "SELECT ticker FROM pools WHERE pool_id = (?) COLLATE NOCASE"
+            args = (pool_id,)
+            return [x[0] for x in self.conn.execute(stmt, args)]
+        except:
+            print("could not get ticker from pool id")
+            return None
 
     def get_pool_id_from_ticker(self, ticker):
         stmt = "SELECT pool_id FROM pools WHERE ticker = (?)"
@@ -148,7 +152,7 @@ class DBHelper:
         return [x[0] for x in self.conn.execute(stmt, args)]
 
     def get_all_subscribed_pool(self):
-        stmt = "SELECT pool_id FROM user_pool"
+        stmt = "SELECT DISTINCT pool_id FROM user_pool"
         return [x[0] for x in self.conn.execute(stmt,)]
 
     def get_all_pools(self):

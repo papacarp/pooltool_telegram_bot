@@ -16,7 +16,7 @@ from modules.emoji import Emoji as e
 from modules import common as c
 from modules import pooltool_dbhelper
 
-plotly.io.orca.config.executable = '~/orca'
+plotly.io.orca.config.executable = '/usr/local/bin/orca'
 plotly.io.orca.config.save()
 
 class EventHandler:
@@ -583,11 +583,14 @@ class EventHandler:
         total_block = 21600
         total_circ_supply = 31112484646000000
 
-        pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
+        #pools = ['95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443']
         for pool in pools:
-            ticker = self.db.get_ticker_from_pool_id(pool)[0]
+            ticker = self.db.get_ticker_from_pool_id(pool)
+            if len(ticker) < 1:
+                continue
+            ticker = ticker[0]
             chat_ids = self.db.get_chat_ids_from_pool_id(pool)  
-            chat_ids = [488598281]
+            #chat_ids = [488598281]
             
             #block_stake_epoch = ptdb.get_block_stake_for_epoch(pool, epoch)
             #blocks_minted = ptdb.get_blocks_minted_for_epoch(pool, epoch)
@@ -596,7 +599,7 @@ class EventHandler:
             
             #livestake = ptdb.get_livestake(pool)
             #genesis_total_stake = ptdb.get_total_genesis_stake()
-            total_delegators = ptdb.get_total_delegators(pool)
+            total_delegators = ptdb.get_total_delegators(pool, epoch)
 
             #current_genesis_epoch = ptdb.get_current_genesis_epoch()
             #pool_first_epoch = ptdb.get_pool_first_epoch(pool)
@@ -608,10 +611,13 @@ class EventHandler:
 
             livestake, pool_first_epoch, pool_lifetime_rewards, pool_lifetime_stake, pool_donestake, block_stake = ptdb.get_pools_data_for_summary(pool)
             block_stake_epoch, blocks_minted, forecasted_tax, forecasted_reward = ptdb.get_pool_epoch_data_for_summary(pool, epoch)
+            if (block_stake_epoch == -1 and blocks_minted == -1 and forecasted_tax == -1 and forecasted_reward == -1) or (pool_lifetime_stake - pool_donestake - block_stake <= 0):
+                continue
+            
             delegator_rewards, pool_rewards = ptdb.get_pool_epoch_rewards(pool, epoch - 1)
             current_genesis_epoch, genesis_total_stake = ptdb.get_genesis_data_for_summary()
 
-            compoundingperiods = (current_genesis_epoch - pool_first_epoch - 1) #fix when epoch is not a day
+            compoundingperiods = 1 #(current_genesis_epoch - pool_first_epoch - 1) #fix when epoch is not a day
             roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
             ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
 
@@ -627,10 +633,13 @@ class EventHandler:
 
             fig = px.bar(x=r_values, y=dist, template='plotly_dark')
             fig.update_layout(
-                title="{ticker} Epoch {epoch}: # of expected block",
+                title=f"{ticker} Epoch {epoch + 1}: # of expected block",
                 xaxis_title="Number of blocks",
                 yaxis_title="Probability in %",
+                paper_bgcolor='rgb(24, 37, 51)',
+                plot_bgcolor='rgb(24, 37, 51)'
             )
+            fig.update_traces(marker_color='rgb(49, 100, 192)')
             img_bytes = fig.to_image(format="png")
             #plt.figure(self.plot_number)
             #self.plot_number = self.plot_number + 1
@@ -645,27 +654,27 @@ class EventHandler:
                 message_type = self.db.get_option_value(chat_id, ticker, 'epoch_summary')
 
                 if message_type:
-                    message = f'*[ {ticker} ] Epoch {epoch} summary {e.globe}*\n' \
-                            f'\n' \
-                            f'Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch / 1000000))}`\n' \
-                            f'Blocks minted: `{blocks_minted}`\n' \
-                            f'\n' \
-                            f'Live stake: `{e.ada}{c.set_prefix(round(livestake / 1000000))}`\n' \
-                            f'Pool Saturation: `{round(saturation, 2)} %`\n' \
-                            f'Total stakeholders: `{total_delegators}`\n' \
-                            f'\n' \
-                            f'*Rewards for epoch {epoch - 1}*\n' \
-                            f'  Stakeholder rewards: `{e.ada}{c.set_prefix(round(delegator_rewards / 1000000))}`\n' \
-                            f'  Pool rewards: `{e.ada}{c.set_prefix(round(pool_rewards / 1000000))}`\n' \
-                            f'  Stakeholder ROS: `{round(ros * 100, 2)} %`\n' \
-                            f'\n' \
-                            f'*Estimated rewards for epoch {epoch}*\n' \
-                            f'  Stakeholder rewards: `{e.ada}{c.set_prefix(round(forecasted_reward / 1000000))}`\n' \
-                            f'  Pool rewards: `{e.ada}{c.set_prefix(round(forecasted_tax / 1000000))}`\n' \
-                            f'\n' \
-                            f'Estimated blocks epoch {epoch + 1}: `{estimated_blocks}`\n' \
-                            f'\n' \
-                            f'_This Bot is brought to you by_ *[ ETR ]*'
+                    message = f'*[ {ticker} ] Epoch {epoch} summary {e.globe}*\n' 
+                    message += f'\n' 
+                    message += f"Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch / 1000000)).replace(' ', '')}`\n" 
+                    message += f'Blocks minted: `{blocks_minted}`\n' 
+                    message += f'Total stakeholders: `{total_delegators}`\n' 
+                    message += f'\n' 
+                    message += f"Live stake: `{e.ada}{c.set_prefix(round(livestake / 1000000)).replace(' ', '')}`\n" 
+                    message += f'Pool Saturation: `{round(saturation, 2)}%`\n' 
+                    message += f'\n' 
+                    message += f'*Rewards for epoch {epoch - 1}*\n' 
+                    message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(delegator_rewards / 1000000)).replace(' ', '')}`\n" 
+                    message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(pool_rewards / 1000000)).replace(' ', '')}`\n" 
+                    message += f'  Stakeholder ROS: `{round(ros * 100, 2)}%`\n' 
+                    message += f'\n' 
+                    message += f'*Estimated rewards for epoch {epoch}*\n' 
+                    message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(forecasted_reward / 1000000)).replace(' ', '')}`\n" 
+                    message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(forecasted_tax / 1000000)).replace(' ', '')}`\n" 
+                    message += f'\n' 
+                    message += f'Estimated blocks epoch {epoch + 1}: `{estimated_blocks}`\n' 
+                    message += f'\n' 
+                    message += f'_This Bot is brought to you by_ *[ ETR ]*'
                     if message_type == 2:
                         self.tg.send_message(message, chat_id, silent=True)
                     else:

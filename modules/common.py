@@ -23,7 +23,7 @@ def get_current_time_millis():
 
 def set_prefix(number):
     if number < 1000:
-        return number
+        return str(number)
     else:
         return si_format(number, precision=2)
 

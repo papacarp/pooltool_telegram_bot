@@ -462,12 +462,13 @@ class EventHandler:
 
     def handle_announcement(self, data):
         pool_id = data['pool']
+        text = data['text'].replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("`", "\\`");
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message = f'\\[ {ticker} ] Announcement {e.globe}\n' \
                       f'\n' \
-                      f"{data['text']}\n" \
+                      f"{text}\n" \
                       f"#{ticker}"
             self.tg.send_message(message, chat_id)
 

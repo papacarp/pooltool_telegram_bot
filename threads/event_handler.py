@@ -583,7 +583,7 @@ class EventHandler:
         total_block = 21600
         total_circ_supply = 31112484646000000
 
-        pools = ['95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443']
+        pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
         for pool in pools:
             ticker = self.db.get_ticker_from_pool_id(pool)
             if len(ticker) < 1:
@@ -626,7 +626,7 @@ class EventHandler:
             else:
                 roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
             ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
-            current_ros = math.pow((pool_rewards / block_stake_epoch_prev) + 1, 1 / (compoundingperiods / (365 / 5))) - 1
+            current_ros = math.pow((pool_rewards / block_stake_epoch_prev) + 1, 365 / 5) - 1
 
             pool_stake = block_stake
             n = total_block * (1 - d)

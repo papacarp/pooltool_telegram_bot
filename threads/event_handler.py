@@ -584,14 +584,14 @@ class EventHandler:
         total_block = 21600
         total_circ_supply = 31112484646000000
 
-        pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
+        #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
         for pool in pools:
             ticker = self.db.get_ticker_from_pool_id(pool)
             if len(ticker) < 1:
                 continue
             ticker = ticker[0]
             chat_ids = self.db.get_chat_ids_from_pool_id(pool)  
-            chat_ids = [488598281]
+            #chat_ids = [488598281]
             
             #block_stake_epoch = ptdb.get_block_stake_for_epoch(pool, epoch)
             #blocks_minted = ptdb.get_blocks_minted_for_epoch(pool, epoch)
@@ -633,8 +633,17 @@ class EventHandler:
             n = total_block * (1 - d)
             p = pool_stake / genesis_total_stake
             var = n * p * (1 - p)
-            r_values = list(range(int(var * 2 + 1) if var > 1 else 10 + 1))
-            dist = [binom.pmf(r, n, p) * 100 for r in r_values]
+            tmp_r_values = list(range(100))
+            tmp_dist = [binom.pmf(r, n, p) * 100 for r in tmp_r_values]
+            # Do a cleanup and remove ~0 values
+            r_values = []
+            dist = []
+            for i, d in enumerate(tmp_dist):
+                if d < 0.005:
+                    continue
+                r_values.append(tmp_r_values[i])
+                dist.append(tmp_dist[i])
+
             estimated_blocks = round(var, 2)  
 
             saturation = (pool_stake / (total_circ_supply  / 150)) * 100

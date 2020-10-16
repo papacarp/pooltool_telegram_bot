@@ -157,8 +157,8 @@ class EventHandler:
             self.db.update_ticker(pool_id, new_ticker)
             message = f"\\[ {ticker} ] Pool change {e.warning} Ticker\n" \
                       f"\n" \
-                      f"From: {data['change']['ticker']['old_value']}\n" \
-                      f"To: {data['change']['ticker']['new_value']}\n" \
+                      f"From: `{data['change']['ticker']['old_value']}`\n" \
+                      f"To: `{data['change']['ticker']['new_value']}`\n" \
                       f"\n" \
                       f"More info at:\n" \
                       f"[Pooltool]({pooltool_url})\n" \
@@ -167,8 +167,8 @@ class EventHandler:
             if int(data['change']['cost']['old_value']) < int(data['change']['cost']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.warning} Fixed cost\n" \
                           f"\n" \
-                          f"From: {data['change']['cost']['old_value']} {e.ada}\n" \
-                          f"To: {data['change']['cost']['new_value']} {e.ada}\n" \
+                          f"From: `{e.ada}{data['change']['cost']['old_value']}`\n" \
+                          f"To: `{e.ada}{data['change']['cost']['new_value']}`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -176,8 +176,8 @@ class EventHandler:
             else:
                 message = f"\\[ {ticker} ] Pool change {e.party} Fixed cost\n" \
                           f"\n" \
-                          f"From: {data['change']['cost']['old_value']} {e.ada}\n" \
-                          f"To: {data['change']['cost']['new_value']} {e.ada}\n" \
+                          f"From: `{e.ada}{data['change']['cost']['old_value']}`\n" \
+                          f"To: `{e.ada}{data['change']['cost']['new_value']}`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -186,8 +186,8 @@ class EventHandler:
             if float(data['change']['margin']['old_value']) < float(data['change']['margin']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.warning} Margin\n" \
                           f"\n" \
-                          f"From: {float(data['change']['margin']['old_value']) * 100}%\n" \
-                          f"To: {float(data['change']['margin']['new_value']) * 100}%\n" \
+                          f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
+                          f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -195,8 +195,8 @@ class EventHandler:
             else:
                 message = f"\\[ {ticker} ] Pool change {e.party} Margin\n" \
                           f"\n" \
-                          f"From: {float(data['change']['margin']['old_value']) * 100}%\n" \
-                          f"To: {float(data['change']['margin']['new_value']) * 100}%\n" \
+                          f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
+                          f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -205,8 +205,8 @@ class EventHandler:
             if int(data['change']['pledge']['old_value']) < int(data['change']['pledge']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.party} Pledge\n" \
                           f"\n" \
-                          f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
-                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}\n" \
+                          f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))}`\n" \
+                          f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))}`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -214,8 +214,8 @@ class EventHandler:
             else:
                 message = f"\\[ {ticker} ] Pool change {e.warning} Pledge\n" \
                           f"\n" \
-                          f"From: {c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))} {e.ada}\n" \
-                          f"To: {c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))} {e.ada}\n" \
+                          f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))}`\n" \
+                          f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))}`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -242,8 +242,8 @@ class EventHandler:
             if message_type:
                 message = f'\\[ {ticker} ] New block! {e.fire}\n' \
                           f'\n' \
-                          f"{e.tools} Blocks this epoch: {data['nbe']}\n" \
-                          f"{e.brick} Total blocks: {data['nb']}\n" \
+                          f"{e.tools} Blocks this epoch: `{data['nbe']}`\n" \
+                          f"{e.brick} Total blocks: `{data['nb']}`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -262,8 +262,8 @@ class EventHandler:
             return
         if delegations > new_delegations:
             message = f'\\[ {ticker} ] Stake decreased 💔\n' \
-                      f'-{c.set_prefix(round(delegations - new_delegations))} {e.ada}\n' \
-                      f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}\n' \
+                      f'`-{e.ada}{c.set_prefix(round(delegations - new_delegations))}`\n' \
+                      f'Livestake: `{e.ada}{c.set_prefix(round(new_delegations))}`\n' \
                       f'\n' \
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
@@ -277,8 +277,8 @@ class EventHandler:
                 self.tg.send_message(message, chat_id)
         elif delegations < new_delegations:
             message = f'\\[ {ticker} ] Stake increased 💚\n' \
-                      f'+{c.set_prefix(round(new_delegations - delegations))} {e.ada}\n' \
-                      f'Livestake: {c.set_prefix(round(new_delegations))} {e.ada}\n' \
+                      f'`+{e.ada}{c.set_prefix(round(new_delegations - delegations))}`\n' \
+                      f'Livestake: `{e.ada}{c.set_prefix(round(new_delegations))}`\n' \
                       f'\n' \
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
@@ -562,15 +562,15 @@ class EventHandler:
                 if reward < 1000000:
                     message += f'Rewards: `{c.set_prefix(round(reward))} Lovelace`\n'
                 else:
-                    message += f'Rewards: `{c.set_prefix(round(reward / 1000000))} {e.ada}`\n'
+                    message += f'Rewards: `{e.ada}{c.set_prefix(round(reward / 1000000))}`\n'
                 if operator_rewards:
-                    message += f'Operator rewards: `{c.set_prefix(round(operator_rewards / 1000000))} {e.ada}`\n' \
-                               f'Lifetime rewards: `{c.set_prefix(round((total_reward + total_operator_rewards) / 1000000))} {e.ada}`\n'
+                    message += f'Operator rewards: `{e.ada}{c.set_prefix(round(operator_rewards / 1000000))}`\n' \
+                               f'Lifetime rewards: `{e.ada}{c.set_prefix(round((total_reward + total_operator_rewards) / 1000000))}`\n'
                 else:
                     if total_reward < 1000000:
                         message += f'Lifetime rewards: `{c.set_prefix(round(total_reward))} Lovelace`\n'
                     else:    
-                        message += f'Lifetime rewards: `{c.set_prefix(round(total_reward / 1000000))} {e.ada}`\n'
+                        message += f'Lifetime rewards: `{e.ada}{c.set_prefix(round(total_reward / 1000000))}`\n'
                 message += f'\n' \
                            f'More info at:\n' \
                            f'[Pooltool]({url})' 
@@ -584,7 +584,7 @@ class EventHandler:
         total_block = 21600
         total_circ_supply = 31112484646000000
 
-        #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
+        #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321'] * 20
         for pool in pools:
             ticker = self.db.get_ticker_from_pool_id(pool)
             if len(ticker) < 1:
@@ -592,23 +592,7 @@ class EventHandler:
             ticker = ticker[0]
             chat_ids = self.db.get_chat_ids_from_pool_id(pool)  
             #chat_ids = [488598281]
-            
-            #block_stake_epoch = ptdb.get_block_stake_for_epoch(pool, epoch)
-            #blocks_minted = ptdb.get_blocks_minted_for_epoch(pool, epoch)
-            #delegator_rewards = ptdb.get_rewards_for_epoch(pool, epoch - 1)
-            #pool_rewards = ptdb.get_tax_for_epoch(pool, epoch - 1)
-            
-            #livestake = ptdb.get_livestake(pool)
-            #genesis_total_stake = ptdb.get_total_genesis_stake()
             total_delegators = ptdb.get_total_delegators(pool, epoch)
-
-            #current_genesis_epoch = ptdb.get_current_genesis_epoch()
-            #pool_first_epoch = ptdb.get_pool_first_epoch(pool)
-            #pool_lifetime_rewards = int(ptdb.get_pool_lifetime_reward(pool))
-            #pool_lifetime_stake = int(ptdb.get_pool_lifetime_stake(pool))
-            #pool_donestake = ptdb.get_pool_donestake(pool)
-            #block_stake = ptdb.get_pool_blockstake(pool)
-            #forecasted_tax, forecasted_reward = ptdb.get_forecasted_tax_reward(pool, epoch)
 
             livestake, pool_first_epoch, pool_lifetime_rewards, pool_lifetime_stake, pool_donestake, block_stake = ptdb.get_pools_data_for_summary(pool)
             block_stake_epoch, blocks_minted, forecasted_tax, forecasted_reward = ptdb.get_pool_epoch_data_for_summary(pool, epoch)
@@ -627,19 +611,28 @@ class EventHandler:
             else:
                 roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
             ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
-            current_ros = math.pow((delegator_rewards / block_stake_epoch_prev) + 1, 365 / 5) - 1
+            if block_stake_epoch_prev == 0:
+                current_ros = 0
+            else:
+                current_ros = math.pow((delegator_rewards / block_stake_epoch_prev) + 1, 365 / 5) - 1
+            if block_stake_epoch == 0:
+                estimated_ros = 0
+            else:
+                estimated_ros = math.pow((forecasted_reward / block_stake_epoch) + 1, 365 / 5) - 1
 
             pool_stake = block_stake
             n = total_block * (1 - d)
             p = pool_stake / genesis_total_stake
             var = n * p * (1 - p)
-            tmp_r_values = list(range(100))
+
+            tmp_r_values = list(range(300))
             tmp_dist = [binom.pmf(r, n, p) * 100 for r in tmp_r_values]
+
             # Do a cleanup and remove ~0 values
             r_values = []
             dist = []
-            for i, d in enumerate(tmp_dist):
-                if d < 0.005:
+            for i, di in enumerate(tmp_dist):
+                if di < 0.005:
                     continue
                 r_values.append(tmp_r_values[i])
                 dist.append(tmp_dist[i])
@@ -658,14 +651,6 @@ class EventHandler:
             )
             fig.update_traces(marker_color='rgb(49, 100, 192)')
             img_bytes = fig.to_image(format="png")
-            #plt.figure(self.plot_number)
-            #self.plot_number = self.plot_number + 1
-            #plt.title(f'{ticker} Epoch {epoch + 1}: # of expected blocks')
-            #plt.xlabel('Number of blocks')
-            #plt.ylabel('Probability in %')
-            #plt.bar(r_values, dist)
-            #buf = io.BytesIO()
-            #plt.savefig(buf, format='png')
 
             for chat_id in chat_ids:       
                 message_type = self.db.get_option_value(chat_id, ticker, 'epoch_summary')
@@ -682,13 +667,15 @@ class EventHandler:
                     message += f'Pool Saturation: `{round(saturation, 2)}%`\n' 
                     message += f'\n' 
                     message += f'*Rewards for epoch {epoch - 1}*\n' 
+                    message += f"  Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch_prev / 1000000)).replace(' ', '')}`\n"
                     message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(delegator_rewards / 1000000)).replace(' ', '')}`\n" 
                     message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(pool_rewards / 1000000)).replace(' ', '')}`\n" 
                     message += f'  Stakeholder ROS: `{round(current_ros * 100, 2)}%`\n'
                     message += f'\n' 
                     message += f'*Estimated rewards for epoch {epoch}*\n' 
                     message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(forecasted_reward / 1000000)).replace(' ', '')}`\n" 
-                    message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(forecasted_tax / 1000000)).replace(' ', '')}`\n" 
+                    message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(forecasted_tax / 1000000)).replace(' ', '')}`\n"
+                    message += f'  Stakeholder ROS: `{round(estimated_ros * 100, 2)}%`' 
                     message += f'\n' 
                     message += f'Estimated blocks epoch {epoch + 1}: `{estimated_blocks}`\n' 
                     message += f'\n' 

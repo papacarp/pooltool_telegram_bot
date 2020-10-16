@@ -17,7 +17,7 @@ class TelegramHandler:
         # self.options_old = ['See options', 'Block minted', 'Battle', 'Sync status', 'Block adjustment', 'Stake change',
         #                     'Epoch summary',
         #                     'Slot loaded', 'Stake change threshold', 'Back']
-        self.options = ['See options', 'Block minted', 'Pool change', 'Stake change', 'Stake change threshold', 'Award', 'Block Estimation', 'Back']
+        self.options = ['See options', 'Block minted', 'Pool change', 'Stake change', 'Stake change threshold', 'Award', 'Epoch summary', 'Block Estimation', 'Back']
         self.states = ['Enable', 'Disable', 'Silence']
 
     def handle_start(self, chat):
@@ -33,7 +33,7 @@ class TelegramHandler:
                   "\n" \
                   "For more information, enter \"/HELP\"\n" \
                   "\n" \
-                  "This pooltool bot was created for pooltool by Kuno Heltborg \[ETR] (Erik The Red)\n" \
+                  "_This pooltool bot was created for pooltool by Kuno Heltborg_ *[ ETR ]* _(Erik The Red)_\n" \
                   "\n" \
                   "*NOTE: This Bot is not case sensitive! text in upper- and lower case work!*"
         self.tg.send_message(message, chat)
@@ -51,6 +51,7 @@ class TelegramHandler:
                   "Enter: /option\n" \
                   "\n" \
                   "*Rewards:*\n" \
+                  "Notifies how much reward you got at each epoch transition\n" \
                   "\n" \
                   "Enter: /reward <stake address>\n" \
                   "\n" \

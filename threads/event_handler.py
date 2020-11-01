@@ -205,8 +205,8 @@ class EventHandler:
             if int(data['change']['pledge']['old_value']) < int(data['change']['pledge']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.party} Pledge\n" \
                           f"\n" \
-                          f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))}`\n" \
-                          f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))}`\n" \
+                          f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000)).replace(' ', '')}`\n" \
+                          f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000)).replace(' ', '')}`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -214,8 +214,8 @@ class EventHandler:
             else:
                 message = f"\\[ {ticker} ] Pool change {e.warning} Pledge\n" \
                           f"\n" \
-                          f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000))}`\n" \
-                          f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000))}`\n" \
+                          f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000)).replace(' ', '')}`\n" \
+                          f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000)).replace(' ', '')}`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -262,8 +262,8 @@ class EventHandler:
             return
         if delegations > new_delegations:
             message = f'\\[ {ticker} ] Stake decreased 💔\n' \
-                      f'`-{e.ada}{c.set_prefix(round(delegations - new_delegations))}`\n' \
-                      f'Livestake: `{e.ada}{c.set_prefix(round(new_delegations))}`\n' \
+                      f"`-{e.ada}{c.set_prefix(round(delegations - new_delegations)).replace(' ', '').replace(' ', '')}`\n" \
+                      f"Livestake: `{e.ada}{c.set_prefix(round(new_delegations)).replace(' ', '').replace(' ', '')}`\n" \
                       f'\n' \
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
@@ -277,8 +277,8 @@ class EventHandler:
                 self.tg.send_message(message, chat_id)
         elif delegations < new_delegations:
             message = f'\\[ {ticker} ] Stake increased 💚\n' \
-                      f'`+{e.ada}{c.set_prefix(round(new_delegations - delegations))}`\n' \
-                      f'Livestake: `{e.ada}{c.set_prefix(round(new_delegations))}`\n' \
+                      f"`+{e.ada}{c.set_prefix(round(new_delegations - delegations)).replace(' ', '')}`\n" \
+                      f"Livestake: `{e.ada}{c.set_prefix(round(new_delegations)).replace(' ', '')}`\n" \
                       f'\n' \
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
@@ -675,7 +675,7 @@ class EventHandler:
                     message += f'*Estimated rewards for epoch {epoch}*\n' 
                     message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(forecasted_reward / 1000000)).replace(' ', '')}`\n" 
                     message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(forecasted_tax / 1000000)).replace(' ', '')}`\n"
-                    message += f'  Stakeholder ROS: `{round(estimated_ros * 100, 2)}%`' 
+                    message += f'  Stakeholder ROS: `{round(estimated_ros * 100, 2)}%`\n' 
                     message += f'\n' 
                     message += f'Estimated blocks epoch {epoch + 1}: `{estimated_blocks}`\n' 
                     message += f'\n' 

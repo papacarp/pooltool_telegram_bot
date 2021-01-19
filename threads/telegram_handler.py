@@ -25,11 +25,16 @@ class TelegramHandler:
                   "\n" \
                   "Please enter the TICKER of the pool(s) you want to follow\n" \
                   "\n" \
-                  "Example: KUNO\n" \
+                  "Example: ETR\n" \
                   "\n" \
                   "In order to remove a TICKER from the list, you have two options:\n" \
                   "1. Enter the TICKER again\n" \
                   "2. Enter \"/DELETE\" to get a list with possible TICKERs to delete\n" \
+                  "\n" \
+                  "*Rewards:*\n" \
+                  "Notifies how much reward you got at each epoch transition\n" \
+                  "\n" \
+                  "Enter: /reward <stake address>\n" \
                   "\n" \
                   "For more information, enter \"/HELP\"\n" \
                   "\n" \
@@ -44,6 +49,10 @@ class TelegramHandler:
                   "\n" \
                   "Example: ETR\n" \
                   "\n" \
+                  "Or add a pool using pool id: \n" \
+                  "\n" \
+                  "/poolid <pool id>" \
+                  "\n" \
                   "\n" \
                   "*Options for each pool:*\n" \
                   "You can enable/disable/silent each specific notification you want for each pool on your list\n" \
@@ -55,8 +64,21 @@ class TelegramHandler:
                   "\n" \
                   "Enter: /reward <stake address>\n" \
                   "\n" \
+                  "\n" \
+                  "/clear_keyboard - removes the telegram keyboard if it's stuck" \
+                  "\n" \
                   "*NOTE: This Bot is not case sensitive! text in upper- and lower case work!*"
         self.tg.send_message(message, chat)
+
+    def get_list_of_pools(self, tickers, pool_ids):
+        message = "List of pools you watch:\n\n"
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        for i in range(0, len(tickers)):
+            pool_name = ptdb.get_pool_name(pool_ids[i])
+            if len(pool_name) > 20:
+                pool_name = pool_name[:20] + "..."
+            message += f"{tickers[i]} - {pool_name}\n"
+        return message
 
     def send_option_type(self, chat):
         keyboard = self.tg.build_keyboard(self.options)
@@ -66,10 +88,21 @@ class TelegramHandler:
         self.options_string_builder[chat] = {}
         self.options_string_builder[chat]['string'] = ' '
         self.options_string_builder[chat]['next'] = 'option_pool'
+
+#        keyboard_list = []
+#        ptdb = pooltool_dbhelper.PoolToolDb()
+#        for i in range(0, len(tickers)):
+#            pool_name = ptdb.get_pool_name(pool_ids[i])
+#            if len(pool_name) > 20:
+#                pool_name = pool_name[:20] + "..."
+#            pool_name = c.deEmojify(pool_name)
+#            pool_name = pool_name.replace("#", "")
+#            keyboard_list.append(f"{tickers[i]} - {pool_name}")
+
         tickers.append('QUIT')
         keyboard = self.tg.build_keyboard(tickers)
         self.tg.send_message("Select pool", chat, keyboard)
-
+    
     def validate_option_type(self, type):
         for option in self.options:
             if type == option.upper():
@@ -162,16 +195,16 @@ class TelegramHandler:
             self.db.add_new_user_pool(chat, pool_id[number], ticker)
         except Exception as e:
             print(f"Something went wrong trying to add ticker {ticker}, {number}, {pool_id}")
-        tickers = self.db.get_tickers_from_chat_id(chat)
-        message = "List of pools you watch:\n\n" + "\n".join(tickers)
+        tickers, pool_ids = self.db.get_ticker_poolid_from_chat_id(chat)
+        message = self.get_list_of_pools(tickers, pool_ids)
         self.tg.send_message(message, chat)
 
     def handle_duplicate_ticker(self, text, chat, pool_id, type):
         if type == 'adding_duplicate':
             if text == 'QUIT':
                 del self.options_string_builder[chat]
-                tickers = self.db.get_tickers_from_chat_id(chat)
-                message = "List of pools you watch:\n\n" + "\n".join(tickers)
+                tickers, pool_ids = self.db.get_ticker_poolid_from_chat_id(chat)
+                message = self.get_list_of_pools(tickers, pool_ids)
                 self.tg.send_message(message, chat, self.tg.remove_keyboard(True))
                 return
             elif text.lower() not in self.options_string_builder[chat]['pool_ids']:
@@ -180,7 +213,7 @@ class TelegramHandler:
                 self.tg.send_message(message, chat, keyboard)
                 return
             else:
-                self.handle_new_pool_id(text, chat)
+                self.handle_new_pool_id(text.lower(), chat)
                 keyboard = self.tg.build_keyboard(self.options_string_builder[chat]['pool_ids'])
                 message = "Do you want to add more?"
                 self.tg.send_message(message, chat, keyboard)
@@ -245,6 +278,20 @@ class TelegramHandler:
             return
 
         self.on_ticker_valid(text[0], 0, chat, pool_id)
+
+    def handle_new_pool_on_pool_id(self, chat, text):
+        text = text.split(' ')
+        if len(text) < 2:
+            message = "Please add a pool id, usage:\n"
+            message += "/poolid <poolid>"
+            self.tg.send_message(message, chat)
+            return
+        pool_id = text[1].lower()
+        if not self.db.does_pool_id_exist(pool_id):
+            c.handle_wallet_newpool(self.db)
+        if self.db.does_pool_id_exist(pool_id):
+            ticker = self.db.get_ticker_from_pool_id(pool_id)
+            self.handle_new_ticker(ticker[0], chat)
 
     def send_option_state(self, chat):
         keyboard = self.tg.build_keyboard(self.states)
@@ -377,8 +424,9 @@ class TelegramHandler:
                         continue
                     text = update["message"]["text"].upper()
                     chat = update["message"]["chat"]["id"]
-
-                    tickers = self.db.get_tickers_from_chat_id(chat)
+                    message = ''
+                    
+                    tickers, pool_ids = self.db.get_ticker_poolid_from_chat_id(chat)
                     if chat in self.options_string_builder:
                         if 'type' in self.options_string_builder[chat] and self.options_string_builder[chat]['type'] == 'adding_duplicate':
                             self.handle_duplicate_ticker(text, chat, None, self.options_string_builder[chat]['type'])
@@ -391,6 +439,8 @@ class TelegramHandler:
                             continue
                         keyboard = self.tg.build_keyboard(tickers)
                         self.tg.send_message("Select pool to delete", chat, keyboard)
+                    elif text == "/CLEAR_KEYBOARD":
+                        self.tg.send_message("Keyboard removed", chat, self.tg.remove_keyboard(True))
                     elif text == "/START":
                         self.handle_start(chat)
                         if 'username' in update["message"]["from"]:
@@ -410,16 +460,19 @@ class TelegramHandler:
                         self.handle_option_start(chat, tickers)
                     elif "/REWARD" in text:
                         self.handle_reward(chat, text)
+                    elif "/POOLID" in text:
+                        self.handle_new_pool_on_pool_id(chat, text)
+                    elif "/LIST" in text:
+                        message = self.get_list_of_pools(tickers, pool_ids)
+                        self.tg.send_message(message, chat)
                     elif text.startswith("/"):
                         message = "Unknown command, try /help"
                         self.tg.send_message(message, chat)
                         continue
                     elif text in tickers:
                         self.db.delete_user_pool(chat, text)
-                        # db.delete_item(chat, text)
-                        tickers = self.db.get_tickers_from_chat_id(chat)
-                        # tickers = db.get_tickers(chat)
-                        message = "List of pools you watch:\n\n" + "\n".join(tickers)
+                        tickers, pool_ids = self.db.get_ticker_poolid_from_chat_id(chat)                        
+                        message = self.get_list_of_pools(tickers, pool_ids)
                         self.tg.send_message(message, chat)
                     else:
                         self.handle_new_ticker(text, chat)

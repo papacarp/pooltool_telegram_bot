@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import time
+import re
 
 from si_prefix import si_format
 
@@ -40,6 +41,9 @@ def get_new_ticker_file():
 
 def handle_wallet_newpool(db):
     data = get_new_ticker_file()
+    
+    if data == 'error':
+        print("Could not get new ticker file")
 
     for poolid in data:
 
@@ -62,3 +66,13 @@ def clean_up_pools_table(db):
             print("Could not delete pool")
 
     print("Clean up pools table DONE!")
+
+
+def deEmojify(text):
+    regrex_pattern = re.compile(pattern = "["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                        "]+", flags = re.UNICODE)
+    return regrex_pattern.sub(r'',text)

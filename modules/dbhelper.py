@@ -151,6 +151,21 @@ class DBHelper:
         args = (chat_id,)
         return [x[0] for x in self.conn.execute(stmt, args)]
 
+    def get_poolid_from_chat_id(self, chat_id):
+        stmt = "SELECT pool_id FROM user_pool WHERE chat_id = (?)"
+        args = (chat_id,)
+        return [x[0] for x in self.conn.execute(stmt, args)]
+
+    def get_ticker_poolid_from_chat_id(self, chat_id):
+        stmt = "SELECT ticker, pool_id FROM user_pool WHERE chat_id = (?)"
+        args = (chat_id,)
+        tickers = []
+        pool_ids = []
+        for ticker, pool_id in self.conn.execute(stmt, args):
+            tickers.append(ticker)
+            pool_ids.append(pool_id)
+        return tickers, pool_ids
+
     def get_all_subscribed_pool(self):
         stmt = "SELECT DISTINCT pool_id FROM user_pool"
         return [x[0] for x in self.conn.execute(stmt,)]

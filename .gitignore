@@ -20,6 +20,9 @@ block_minted
 stake_change
 slot_loaded
 wallet_poolchange
+wallet_poolchange_cost
+wallet_poolchange_pledge
 stake_change
+epoch_summary
 
 *.dbhelper.py.swp

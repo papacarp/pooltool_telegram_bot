@@ -148,6 +148,10 @@ class EventHandler:
         pool_id = data['pool']
         pooltool_url = f'https://pooltool.io/pool/{pool_id}'
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        pool_name = ptdb.get_pool_name(pool_id)  
+        if len(pool_name) > 20:
+            pool_name = pool_name[:20] + "..."
         if chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
         else:
@@ -156,6 +160,7 @@ class EventHandler:
             new_ticker = data['change']['ticker']['new_value']
             self.db.update_ticker(pool_id, new_ticker)
             message = f"\\[ {ticker} ] Pool change {e.warning} Ticker\n" \
+                      f'{pool_name}\n' \
                       f"\n" \
                       f"From: `{data['change']['ticker']['old_value']}`\n" \
                       f"To: `{data['change']['ticker']['new_value']}`\n" \
@@ -164,8 +169,11 @@ class EventHandler:
                       f"[Pooltool]({pooltool_url})\n" \
                       f"#{ticker}"
         elif 'cost' in data['change']:
+            with open('wallet_poolchange_cost', 'w') as f:
+                f.write(json.dumps(data))
             if int(data['change']['cost']['old_value']) < int(data['change']['cost']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.warning} Fixed cost\n" \
+                          f'{pool_name}\n' \
                           f"\n" \
                           f"From: `{e.ada}{data['change']['cost']['old_value']}`\n" \
                           f"To: `{e.ada}{data['change']['cost']['new_value']}`\n" \
@@ -175,6 +183,7 @@ class EventHandler:
                           f"#{ticker}"
             else:
                 message = f"\\[ {ticker} ] Pool change {e.party} Fixed cost\n" \
+                          f'{pool_name}\n' \
                           f"\n" \
                           f"From: `{e.ada}{data['change']['cost']['old_value']}`\n" \
                           f"To: `{e.ada}{data['change']['cost']['new_value']}`\n" \
@@ -183,8 +192,11 @@ class EventHandler:
                           f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
         elif 'margin' in data['change']:
+            with open('wallet_poolchange_margin', 'w') as f:
+                f.write(json.dumps(data))
             if float(data['change']['margin']['old_value']) < float(data['change']['margin']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.warning} Margin\n" \
+                          f'{pool_name}\n' \
                           f"\n" \
                           f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
                           f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
@@ -194,6 +206,7 @@ class EventHandler:
                           f"#{ticker}"
             else:
                 message = f"\\[ {ticker} ] Pool change {e.party} Margin\n" \
+                          f'{pool_name}\n' \
                           f"\n" \
                           f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
                           f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
@@ -202,8 +215,11 @@ class EventHandler:
                           f"[Pooltool]({pooltool_url})\n" \
                           f"#{ticker}"
         elif 'pledge' in data['change']:
+            with open('wallet_poolchange_pledge', 'w') as f:
+                f.write(json.dumps(data))
             if int(data['change']['pledge']['old_value']) < int(data['change']['pledge']['new_value']):
                 message = f"\\[ {ticker} ] Pool change {e.party} Pledge\n" \
+                          f'{pool_name}\n' \
                           f"\n" \
                           f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000)).replace(' ', '')}`\n" \
                           f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000)).replace(' ', '')}`\n" \
@@ -213,6 +229,7 @@ class EventHandler:
                           f"#{ticker}"
             else:
                 message = f"\\[ {ticker} ] Pool change {e.warning} Pledge\n" \
+                          f'{pool_name}\n' \
                           f"\n" \
                           f"From: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['old_value']) / 1000000)).replace(' ', '')}`\n" \
                           f"To: `{e.ada}{c.set_prefix(round(int(data['change']['pledge']['new_value']) / 1000000)).replace(' ', '')}`\n" \
@@ -236,11 +253,16 @@ class EventHandler:
         pool_id = data['pool']
         pooltool_url = f'https://pooltool.io/pool/{pool_id}/blocks'
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        pool_name = ptdb.get_pool_name(pool_id)  
+        if len(pool_name) > 20:
+            pool_name = pool_name[:20] + "..."
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message_type = self.db.get_option_value(chat_id, ticker, 'block_minted')
             if message_type:
                 message = f'\\[ {ticker} ] New block! {e.fire}\n' \
+                          f'{pool_name}\n' \
                           f'\n' \
                           f"{e.tools} Blocks this epoch: `{data['nbe']}`\n" \
                           f"{e.brick} Total blocks: `{data['nb']}`\n" \
@@ -254,7 +276,7 @@ class EventHandler:
                     self.tg.send_message(message, chat_id)
 
     def check_delegation_changes(self, chat_id, ticker, delegations, new_delegations, message_type, threshold,
-                                 pooltool_url):
+                                 pooltool_url, pool_name):
         if c.DEBUG:
             stake_millis = c.get_current_time_millis()
 
@@ -262,6 +284,8 @@ class EventHandler:
             return
         if delegations > new_delegations:
             message = f'\\[ {ticker} ] Stake decreased 💔\n' \
+                      f'\n' \
+                      f'{pool_name}\n' \
                       f"`-{e.ada}{c.set_prefix(round(delegations - new_delegations)).replace(' ', '').replace(' ', '')}`\n" \
                       f"Livestake: `{e.ada}{c.set_prefix(round(new_delegations)).replace(' ', '').replace(' ', '')}`\n" \
                       f'\n' \
@@ -277,6 +301,8 @@ class EventHandler:
                 self.tg.send_message(message, chat_id)
         elif delegations < new_delegations:
             message = f'\\[ {ticker} ] Stake increased 💚\n' \
+                      f'{pool_name}\n' \
+                      f'\n' \
                       f"`+{e.ada}{c.set_prefix(round(new_delegations - delegations)).replace(' ', '')}`\n" \
                       f"Livestake: `{e.ada}{c.set_prefix(round(new_delegations)).replace(' ', '')}`\n" \
                       f'\n' \
@@ -305,6 +331,10 @@ class EventHandler:
         pool_id = data['pool']
         pooltool_url = f'https://pooltool.io/pool/{pool_id}/delegators'
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        pool_name = ptdb.get_pool_name(pool_id)  
+        if len(pool_name) > 20:
+            pool_name = pool_name[:20] + "..."
 
         if c.DEBUG:
             print(f"getting chat ids from db: {c.get_current_time_millis() - stake_millis}")
@@ -322,7 +352,7 @@ class EventHandler:
                     threshold = self.db.get_option_value(chat_id, ticker, 'stake_change_threshold')
                     self.check_delegation_changes(chat_id, ticker, data['old_stake'] / 1000000,
                                                   data['livestake'] / 1000000,
-                                                  message_type, threshold, pooltool_url)
+                                                  message_type, threshold, pooltool_url, pool_name)
 
     def handle_block_adjustment(self, data):
         with open('block_adjustment', 'w') as f:
@@ -464,9 +494,14 @@ class EventHandler:
         pool_id = data['pool']
         text = data['text'].replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("`", "\\`");
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        pool_name = ptdb.get_pool_name(pool_id)  
+        if len(pool_name) > 20:
+            pool_name = pool_name[:20] + "..."
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message = f'\\[ {ticker} ] Announcement {e.globe}\n' \
+                      f'{pool_name}\n' \
                       f'\n' \
                       f"{text}\n" \
                       f"#{ticker}"
@@ -475,6 +510,10 @@ class EventHandler:
     def handle_award(self, data):
         pool_id = data['pool']
         chat_ids = self.db.get_chat_ids_from_pool_id(pool_id)
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        pool_name = ptdb.get_pool_name(pool_id)  
+        if len(pool_name) > 20:
+            pool_name = pool_name[:20] + "..."
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
             message_type = self.db.get_option_value(chat_id, ticker, 'award')
@@ -484,6 +523,7 @@ class EventHandler:
             nl = '\n'
             image_url = f"https://pooltool.io/{award_data['award']}.png"
             message = f'\\[ {ticker} ] Award! {e.throphy}\n' \
+                      f'{pool_name}\n' \
                       f'\n' \
                       f"{award_data['text'].replace('<br/>', nl)}\n" \
                       f"{award_data['hash']}\n" \
@@ -552,7 +592,13 @@ class EventHandler:
                     else:
                         continue
                 url = f'https://pooltool.io/address/{stake_key_hash}'
-                reward = ptdb.get_stake_rewards(stake_key_hash, epoch)
+                for retry in range(0,3):
+                    reward = ptdb.get_stake_rewards(stake_key_hash, epoch)
+                    if reward is not None:
+                        break
+                    time.sleep(1)
+                if reward is None:
+                    continue
                 total_reward = ptdb.get_total_stake_rewards(stake_key_hash)
                 operator_rewards = ptdb.get_operator_rewards(stake_key_hash, epoch)
                 total_operator_rewards = ptdb.get_total_operator_rewards(stake_key_hash)
@@ -577,12 +623,15 @@ class EventHandler:
                 self.tg.send_message(message, chat_id)
 
     def handle_epoch_summary(self, data):
+        with open('epoch_summary', 'w') as f:
+            f.write(json.dumps(data))
         pools = self.db.get_all_subscribed_pool()
         ptdb = pooltool_dbhelper.PoolToolDb()
         epoch = data['epoch']
         d = data['d']
+        reserves = data['reserves']
         total_block = 21600
-        total_circ_supply = 31112484646000000
+        total_circ_supply = 45000000000000000 - reserves
 
         #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321'] * 20
         for pool in pools:
@@ -590,9 +639,13 @@ class EventHandler:
             if len(ticker) < 1:
                 continue
             ticker = ticker[0]
-            chat_ids = self.db.get_chat_ids_from_pool_id(pool)  
+            chat_ids = self.db.get_chat_ids_from_pool_id(pool)
+            pool_name = ptdb.get_pool_name(pool)  
+            if len(pool_name) > 20:
+                pool_name = pool_name[:20] + "..."
             #chat_ids = [488598281]
             total_delegators = ptdb.get_total_delegators(pool, epoch)
+            assigned_blocks = ptdb.get_assigned_blocks(pool, epoch)
 
             livestake, pool_first_epoch, pool_lifetime_rewards, pool_lifetime_stake, pool_donestake, block_stake = ptdb.get_pools_data_for_summary(pool)
             block_stake_epoch, blocks_minted, forecasted_tax, forecasted_reward = ptdb.get_pool_epoch_data_for_summary(pool, epoch)
@@ -639,7 +692,7 @@ class EventHandler:
 
             estimated_blocks = round(var, 2)  
 
-            saturation = (pool_stake / (total_circ_supply  / 150)) * 100
+            saturation = (pool_stake / (total_circ_supply  / 500)) * 100
 
             fig = px.bar(x=r_values, y=dist, template='plotly_dark')
             fig.update_layout(
@@ -657,9 +710,13 @@ class EventHandler:
 
                 if message_type:
                     message = f'*[ {ticker} ] Epoch {epoch} summary {e.globe}*\n' 
+                    message += f'{pool_name}\n'
                     message += f'\n' 
                     message += f"Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch / 1000000)).replace(' ', '')}`\n" 
-                    message += f'Blocks minted: `{blocks_minted}`\n' 
+                    message += f'Blocks minted: `{blocks_minted}'
+                    if assigned_blocks is not None:
+                        message += f"/{assigned_blocks} {e.star if blocks_minted == assigned_blocks and blocks_minted != 0 else ''}"
+                    message += f'`\n' 
                     message += f'Total stakeholders: `{total_delegators}`\n' 
                     message += f'\n'
                     message += f'Lifetime ROS: `{round(ros * 100, 2)}%`\n'

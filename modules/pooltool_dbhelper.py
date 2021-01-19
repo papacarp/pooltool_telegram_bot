@@ -5,10 +5,10 @@ class PoolToolDb:
 
     def __init__(self):
         self.pw = open('files/pw', 'r').read()
-        self.conn = psycopg2.connect(database='postgres',
+        self.conn = psycopg2.connect(database='cexplorer',
                                      user='postgres',
                                      password=self.pw,
-                                     host='pooltool2.cepwjus5jmyc.us-west-2.rds.amazonaws.com',
+                                     host='ec2-54-214-64-246.us-west-2.compute.amazonaws.com',
                                      port='5432')
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
@@ -28,6 +28,9 @@ class PoolToolDb:
     def get_stake_rewards(self, addr, epoch):
         self.cur.execute("select stake_rewards from pt_addresses_history where stake_address=lower(%s) and epoch=%s", [addr, epoch])
         row = self.cur.fetchone()
+        if row is None:
+            print(f"Could not get any rewards for this addr: {addr}")
+            return None
         return row[0]
     
     def get_total_stake_rewards(self, addr):
@@ -50,75 +53,87 @@ class PoolToolDb:
         row = self.cur.fetchone()
         return row[0]
 
-    def get_block_stake_for_epoch(self, pool_id, epoch):
-        self.cur.execute("select blockstake from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
+    def get_assigned_blocks(self, pool_id, epoch):
+        self.cur.execute("select assigned_slots from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
         row = self.cur.fetchone()
         return row[0]
     
-    def get_blocks_minted_for_epoch(self, pool_id, epoch):
-        self.cur.execute("select epoch_blocks from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
+    def get_pool_name(self, pool_id):
+        self.cur.execute("select pool_md_name from pools where \"poolPubKey\"=lower(%s)", [pool_id])
         row = self.cur.fetchone()
-        return row[0]
-    
-    def get_rewards_for_epoch(self, pool_id, epoch):
-        self.cur.execute("select epoch_rewards from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
-        row = self.cur.fetchone()
-        return row[0]
-    
-    def get_tax_for_epoch(self, pool_id, epoch):
-        self.cur.execute("select epoch_tax from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
-        row = self.cur.fetchone()
+        if row is None:
+            return ''
         return row[0]
 
-    def get_livestake(self, pool_id):
-        self.cur.execute("select livestake from pools where \"poolPubKey\"=lower(%s)", [pool_id])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_block_stake_for_epoch(self, pool_id, epoch):
+    #    self.cur.execute("select blockstake from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
+    #    row = self.cur.fetchone()
+    #    return row[0]
     
-    def get_total_genesis_stake(self,):
-        self.cur.execute("select total_staked from genesis where genesis_id=%s", [18])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_blocks_minted_for_epoch(self, pool_id, epoch):
+    #    self.cur.execute("select epoch_blocks from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
+    #    row = self.cur.fetchone()
+    #    return row[0]
     
-    def get_current_genesis_epoch(self,):
-        self.cur.execute("select epoch from genesis where genesis_id=%s", [18])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_rewards_for_epoch(self, pool_id, epoch):
+    #    self.cur.execute("select epoch_rewards from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
+    #    row = self.cur.fetchone()
+    #    return row[0]
     
-    def get_pool_first_epoch(self, pool_id):
-        self.cur.execute("select first_epoch from pools where \"poolPubKey\"=%s", [pool_id])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_tax_for_epoch(self, pool_id, epoch):
+    #    self.cur.execute("select epoch_tax from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
+    #    row = self.cur.fetchone()
+    #    return row[0]
 
-    def get_pool_lifetime_reward(self, pool_id):
-        self.cur.execute("select lifetime_rewards from pools where \"poolPubKey\"=%s", [pool_id])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_livestake(self, pool_id):
+    #    self.cur.execute("select livestake from pools where \"poolPubKey\"=lower(%s)", [pool_id])
+    #    row = self.cur.fetchone()
+    #    return row[0]
     
-    def get_pool_lifetime_stake(self, pool_id):
-        self.cur.execute("select lifetime_stake from pools where \"poolPubKey\"=%s", [pool_id])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_total_genesis_stake(self,):
+    #    self.cur.execute("select total_staked from genesis where genesis_id=%s", [18])
+    #    row = self.cur.fetchone()
+    #    return row[0]
+    
+    #def get_current_genesis_epoch(self,):
+    #    self.cur.execute("select epoch from genesis where genesis_id=%s", [18])
+    #    row = self.cur.fetchone()
+    #    return row[0]
+    
+    #def get_pool_first_epoch(self, pool_id):
+    #    self.cur.execute("select first_epoch from pools where \"poolPubKey\"=%s", [pool_id])
+    #    row = self.cur.fetchone()
+    #    return row[0]
 
-    def get_pool_donestake(self, pool_id):
-        self.cur.execute("select donestake from pools where \"poolPubKey\"=%s", [pool_id])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_pool_lifetime_reward(self, pool_id):
+    #    self.cur.execute("select lifetime_rewards from pools where \"poolPubKey\"=%s", [pool_id])
+    #    row = self.cur.fetchone()
+    #    return row[0]
     
-    def get_pool_blockstake(self, pool_id):
-        self.cur.execute("select blockstake from pools where \"poolPubKey\"=%s", [pool_id])
-        row = self.cur.fetchone()
-        return row[0]
+    #def get_pool_lifetime_stake(self, pool_id):
+    #    self.cur.execute("select lifetime_stake from pools where \"poolPubKey\"=%s", [pool_id])
+    #    row = self.cur.fetchone()
+    #    return row[0]
+
+    #def get_pool_donestake(self, pool_id):
+    #    self.cur.execute("select donestake from pools where \"poolPubKey\"=%s", [pool_id])
+    #    row = self.cur.fetchone()
+    #    return row[0]
+    
+    #def get_pool_blockstake(self, pool_id):
+    #    self.cur.execute("select blockstake from pools where \"poolPubKey\"=%s", [pool_id])
+    #    row = self.cur.fetchone()
+    #    return row[0]
     
     def get_total_delegators(self, pool_id, epoch):
         self.cur.execute("select count(distinct \"stake_address\") from pt_addresses_history where \"poolid\"=%s and epoch=%s", [pool_id, epoch])
         row = self.cur.fetchone()
         return row[0]
     
-    def get_forecasted_tax_reward(self, pool_id, epoch):
-        self.cur.execute("select fcp1_epoch_tax, fcp1_epoch_rewards from pool_epoch_data where \"poolPubKey\"=%s and epoch=%s", [pool_id, epoch])
-        row = self.cur.fetchone()
-        return row['fcp1_epoch_tax'], row['fcp1_epoch_rewards']
+    #def get_forecasted_tax_reward(self, pool_id, epoch):
+    #    self.cur.execute("select fcp1_epoch_tax, fcp1_epoch_rewards from pool_epoch_data where \"poolPubKey\"=%s and epoch=%s", [pool_id, epoch])
+    #    row = self.cur.fetchone()
+    #    return row['fcp1_epoch_tax'], row['fcp1_epoch_rewards']
 
     def get_pools_data_for_summary(self, pool_id):
         self.cur.execute("select livestake, first_epoch, lifetime_rewards, lifetime_stake, donestake, blockstake from pools where \"poolPubKey\"=lower(%s)", [pool_id])

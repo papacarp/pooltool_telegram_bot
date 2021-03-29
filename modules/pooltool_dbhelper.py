@@ -1,4 +1,4 @@
-import psycopg2.extras
+#import psycopg2.extras
 import urllib
 import json
 

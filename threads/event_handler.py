@@ -1,7 +1,7 @@
 import time
-import boto3
+#import boto3
 import json
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import math
 import io
 import threading
@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.io
 
 from scipy.stats import binom
-from os import environ
+#from os import environ
 
 from modules.emoji import Emoji as e
 from modules import common as c
@@ -24,11 +24,11 @@ class EventHandler:
         self.db = db
         self.tg = tg
 
-        environ["AWS_PROFILE"] = "bot_iam"
-        self.client = boto3.client('sts')
-        self.session = boto3.Session(profile_name='bot_iam')
-        self.sqs = boto3.client('sqs')
-        self.queue_url = 'https://sqs.us-west-2.amazonaws.com/637019325511/pooltoolevents.fifo'
+        #environ["AWS_PROFILE"] = "bot_iam"
+        #self.client = boto3.client('sts')
+        #self.session = boto3.Session(profile_name='bot_iam')
+        #self.sqs = boto3.client('sqs')
+        #self.queue_url = 'https://sqs.us-west-2.amazonaws.com/637019325511/pooltoolevents.fifo'
 
         self.plot_number = 0
 

@@ -22,6 +22,7 @@ slot_loaded
 wallet_poolchange
 wallet_poolchange_cost
 wallet_poolchange_pledge
+wallet_poolchange_margin
 stake_change
 epoch_summary
 

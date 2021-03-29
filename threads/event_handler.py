@@ -32,6 +32,9 @@ class EventHandler:
 
         self.plot_number = 0
 
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        _, _, self.reserves = ptdb.get_genesis_data_for_summary()
+
     def get_aws_event(self):
         try:
             response = self.sqs.receive_message(
@@ -108,7 +111,7 @@ class EventHandler:
                 chat_ids = self.db.get_chat_ids_from_pool_id(player['pool'])
                 for chat_id in chat_ids:
                     ticker = self.db.get_ticker_from_pool_id(player['pool'])[0]
-                    message_type = self.db.get_option_value(chat_id, ticker, 'battle')
+                    message_type = self.db.get_option_value_poolid(chat_id, pool_id, 'battle')
                     if message_type:
                         message = f'\\[ {ticker} ] You won! {e.throphy}\n' \
                                   f'\n' \
@@ -126,7 +129,7 @@ class EventHandler:
                 chat_ids = self.db.get_chat_ids_from_pool_id(player['pool'])
                 for chat_id in chat_ids:
                     ticker = self.db.get_ticker_from_pool_id(player['pool'])[0]
-                    message_type = self.db.get_option_value(chat_id, ticker, 'battle')
+                    message_type = self.db.get_option_value_poolid(chat_id, pool_id, 'battle')
                     if message_type:
                         message = f'\\[ {ticker} ] You lost! {e.annoyed}\n' \
                                   f'\n' \
@@ -198,8 +201,8 @@ class EventHandler:
                 message = f"\\[ {ticker} ] Pool change {e.warning} Margin\n" \
                           f'{pool_name}\n' \
                           f"\n" \
-                          f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
-                          f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
+                          f"From: `{float(data['change']['margin']['old_value'])}%`\n" \
+                          f"To: `{float(data['change']['margin']['new_value'])}%`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -208,8 +211,8 @@ class EventHandler:
                 message = f"\\[ {ticker} ] Pool change {e.party} Margin\n" \
                           f'{pool_name}\n' \
                           f"\n" \
-                          f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
-                          f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
+                          f"From: `{float(data['change']['margin']['old_value'])}%`\n" \
+                          f"To: `{float(data['change']['margin']['new_value'])}%`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -239,7 +242,7 @@ class EventHandler:
                           f"#{ticker}"
         for chat_id in chat_ids:
             self.tg.send_message(message, chat_id)
-            message_type = self.db.get_option_value(chat_id, ticker, 'pool_change')
+            message_type = self.db.get_option_value_poolid(chat_id, pool_id, 'pool_change')
             if message_type:
                 if message_type == 2:
                     self.tg.send_message(message, chat_id, silent=True)
@@ -259,7 +262,7 @@ class EventHandler:
             pool_name = pool_name[:20] + "..."
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
-            message_type = self.db.get_option_value(chat_id, ticker, 'block_minted')
+            message_type = self.db.get_option_value_poolid(chat_id, pool_id, 'block_minted')
             if message_type:
                 message = f'\\[ {ticker} ] New block! {e.fire}\n' \
                           f'{pool_name}\n' \
@@ -276,18 +279,26 @@ class EventHandler:
                     self.tg.send_message(message, chat_id)
 
     def check_delegation_changes(self, chat_id, ticker, delegations, new_delegations, message_type, threshold,
-                                 pooltool_url, pool_name):
+                                 pooltool_url, pool_name, pool_id):
         if c.DEBUG:
             stake_millis = c.get_current_time_millis()
 
         if abs(delegations - new_delegations) < threshold or abs(delegations - new_delegations) < 1:
             return
+
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        total_circ_supply = 45000000000000000 - self.reserves
+        livestake_data = ptdb.get_livestake()
+        livestake = livestake_data[pool_id]
+        saturation = (livestake / (total_circ_supply  / 500)) * 100
+
         if delegations > new_delegations:
             message = f'\\[ {ticker} ] Stake decreased 💔\n' \
-                      f'\n' \
                       f'{pool_name}\n' \
+                      f'\n' \
                       f"`-{e.ada}{c.set_prefix(round(delegations - new_delegations)).replace(' ', '').replace(' ', '')}`\n" \
                       f"Livestake: `{e.ada}{c.set_prefix(round(new_delegations)).replace(' ', '').replace(' ', '')}`\n" \
+                      f"Saturation: `{round(saturation, 2)}%`\n" \
                       f'\n' \
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
@@ -305,6 +316,7 @@ class EventHandler:
                       f'\n' \
                       f"`+{e.ada}{c.set_prefix(round(new_delegations - delegations)).replace(' ', '')}`\n" \
                       f"Livestake: `{e.ada}{c.set_prefix(round(new_delegations)).replace(' ', '')}`\n" \
+                      f"Saturation: `{round(saturation, 2)}%`\n" \
                       f'\n' \
                       f'More info at:\n' \
                       f'[Pooltool]({pooltool_url})\n' \
@@ -347,12 +359,12 @@ class EventHandler:
                 print(f"getting ticker from db: {c.get_current_time_millis() - stake_millis}")
 
             for chat_id in chat_ids:
-                message_type = self.db.get_option_value(chat_id, ticker, 'stake_change')
+                message_type = self.db.get_option_value_poolid(chat_id, pool_id, 'stake_change')
                 if message_type:
-                    threshold = self.db.get_option_value(chat_id, ticker, 'stake_change_threshold')
+                    threshold = self.db.get_option_value_poolid(chat_id, pool_id, 'stake_change_threshold')
                     self.check_delegation_changes(chat_id, ticker, data['old_stake'] / 1000000,
                                                   data['livestake'] / 1000000,
-                                                  message_type, threshold, pooltool_url, pool_name)
+                                                  message_type, threshold, pooltool_url, pool_name, pool_id)
 
     def handle_block_adjustment(self, data):
         with open('block_adjustment', 'w') as f:
@@ -516,7 +528,7 @@ class EventHandler:
             pool_name = pool_name[:20] + "..."
         for chat_id in chat_ids:
             ticker = self.db.get_ticker_from_pool_id(pool_id)[0]
-            message_type = self.db.get_option_value(chat_id, ticker, 'award')
+            message_type = self.db.get_option_value_poolid(chat_id, pool_id, 'award')
             if not message_type:
                 continue
             award_data = data['award']
@@ -567,7 +579,7 @@ class EventHandler:
             plt.savefig(buf, format='png')
 
             for chat_id in chat_ids:
-                message_type = self.db.get_option_value(chat_id, ticker, 'block_estimation')
+                message_type = self.db.get_option_value_poolid(chat_id, pool_id, 'block_estimation')
                 if not message_type:
                     continue
                 buf.seek(0)
@@ -580,7 +592,11 @@ class EventHandler:
         epoch = data['epoch']
         chat_ids = self.db.get_all_reward_users()
         ptdb = pooltool_dbhelper.PoolToolDb()
+        counter = 0
+        #chat_ids = [488598281]
         for chat_id in chat_ids:
+            counter += 1
+            print(f"Rewards Progress: {counter} : {len(chat_ids)}")
             addrs = self.db.get_reward_addr_from_chat_id(chat_id)
             for addr in addrs:
                 try:
@@ -590,6 +606,7 @@ class EventHandler:
                     if ptdb.does_rewards_addr_exist(addr):
                         stake_key_hash = addr
                     else:
+                        print(f"address that failed: {addr}")
                         continue
                 url = f'https://pooltool.io/address/{stake_key_hash}'
                 for retry in range(0,3):
@@ -599,9 +616,9 @@ class EventHandler:
                     time.sleep(1)
                 if reward is None:
                     continue
-                total_reward = ptdb.get_total_stake_rewards(stake_key_hash)
+                total_reward = ptdb.get_total_stake_rewards(stake_key_hash, epoch)
                 operator_rewards = ptdb.get_operator_rewards(stake_key_hash, epoch)
-                total_operator_rewards = ptdb.get_total_operator_rewards(stake_key_hash)
+                total_operator_rewards = ptdb.get_total_operator_rewards(stake_key_hash, epoch)
                 message = f'Rewards! {e.moneyBag} epoch {epoch}\n' \
                           f'`{addr[:5]}...{addr[len(addr) - 5:]}`\n' \
                           f'\n'
@@ -629,12 +646,27 @@ class EventHandler:
         ptdb = pooltool_dbhelper.PoolToolDb()
         epoch = data['epoch']
         d = data['d']
-        reserves = data['reserves']
+        self.reserves = data['reserves']
         total_block = 21600
-        total_circ_supply = 45000000000000000 - reserves
+        total_circ_supply = 45000000000000000 - self.reserves
+        
+        current_genesis_epoch, genesis_total_stake, _ = ptdb.get_genesis_data_for_summary()
 
-        #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321'] * 20
-        for pool in pools:
+        cur_reward_data = ptdb.get_reward_data(epoch - 1)
+        forecasted_reward_data = ptdb.get_reward_data(epoch)
+                
+        stake_data_prev = ptdb.get_stake_data(epoch - 1)
+        stake_data = ptdb.get_stake_data(epoch)
+        stake_data_next = ptdb.get_stake_data(epoch + 1)
+
+        livestake_data = ptdb.get_livestake()
+
+        #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
+        for i, pool in enumerate(pools):
+            
+            print(f"Summary Progess: {i} / {len(pools)}")
+            print(f"Starting epoch summary for pool: {pool}")
+
             ticker = self.db.get_ticker_from_pool_id(pool)
             if len(ticker) < 1:
                 continue
@@ -643,39 +675,68 @@ class EventHandler:
             pool_name = ptdb.get_pool_name(pool)  
             if len(pool_name) > 20:
                 pool_name = pool_name[:20] + "..."
-            #chat_ids = [488598281]
-            total_delegators = ptdb.get_total_delegators(pool, epoch)
-            assigned_blocks = ptdb.get_assigned_blocks(pool, epoch)
+            #chat_ids = [488598281, 509234811]      #Papa = 509234811
 
-            livestake, pool_first_epoch, pool_lifetime_rewards, pool_lifetime_stake, pool_donestake, block_stake = ptdb.get_pools_data_for_summary(pool)
-            block_stake_epoch, blocks_minted, forecasted_tax, forecasted_reward = ptdb.get_pool_epoch_data_for_summary(pool, epoch)
-            if block_stake_epoch == -1 and blocks_minted == -1 and forecasted_tax == -1 and forecasted_reward == -1:
+            try:
+                if pool in cur_reward_data:
+                    current_ros = cur_reward_data[pool]['epochRos'] if 'epochRos' in cur_reward_data[pool] else 0
+                    current_tax = cur_reward_data[pool]['epochTax'] if 'epochTax' in cur_reward_data[pool] else 0
+                    current_rewards = cur_reward_data[pool]['epochRewards'] if 'epochRewards' in cur_reward_data[pool] else 0
+                    current_lifetime_ros = cur_reward_data[pool]['lifetimeRos'] if 'lifetimeRos' in cur_reward_data[pool] else 0
+                else:
+                    current_ros = 0
+                    current_tax = 0
+                    current_rewards = 0
+                    current_lifetime_ros = 0
+
+                if pool in forecasted_reward_data:
+                    forecasted_ros = forecasted_reward_data[pool]['epochRos'] if 'epochRos' in forecasted_reward_data[pool] else 0
+                    forecasted_tax = forecasted_reward_data[pool]['epochTax'] if 'epochTax' in forecasted_reward_data[pool] else 0
+                    forecasted_reward = forecasted_reward_data[pool]['epochRewards'] if 'epochRewards' in forecasted_reward_data[pool] else 0
+                else:
+                    forecasted_ros = 0
+                    forecasted_tax = 0
+                    forecasted_reward = 0
+
+                if pool in stake_data_prev:
+                    block_stake_prev = stake_data_prev[pool]
+                else:
+                    block_stake_prev = 0
+                if pool in stake_data:
+                    block_stake = stake_data[pool]
+                else:
+                    block_stake = 0
+                if pool in stake_data_next:
+                    block_stake_next = stake_data_next[pool]
+                else:
+                    block_stake_next = 0
+
+                blocks_minted, delegators, assigned_blocks = ptdb.get_pool_stats(pool, epoch)
+                if pool in livestake_data:
+                    livestake = livestake_data[pool]
+                else:
+                    livestake = 0
+            except Exception as ex:
+                print(ex)
                 continue
-            block_stake_epoch_prev, blocks_minted_prev, forecasted_tax_prev, forecasted_reward_prev = ptdb.get_pool_epoch_data_for_summary(pool, epoch - 1)
-            if block_stake_epoch_prev == -1 and blocks_minted_prev == -1 and forecasted_tax_prev == -1 and forecasted_reward_prev == -1:
-                continue
-            
-            delegator_rewards, pool_rewards = ptdb.get_pool_epoch_rewards(pool, epoch - 1)
-            current_genesis_epoch, genesis_total_stake = ptdb.get_genesis_data_for_summary()
 
-            compoundingperiods = 1 #(current_genesis_epoch - pool_first_epoch - 1) #fix when epoch is not a day
-            if pool_lifetime_stake - pool_donestake - block_stake <= 0:
-                roioverspan = 0
-            else:
-                roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
-            ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
-            if block_stake_epoch_prev == 0:
-                current_ros = 0
-            else:
-                current_ros = math.pow((delegator_rewards / block_stake_epoch_prev) + 1, 365 / 5) - 1
-            if block_stake_epoch == 0:
-                estimated_ros = 0
-            else:
-                estimated_ros = math.pow((forecasted_reward / block_stake_epoch) + 1, 365 / 5) - 1
+            #compoundingperiods = 1 #(current_genesis_epoch - pool_first_epoch - 1) #fix when epoch is not a day
+            #if pool_lifetime_stake - pool_donestake - block_stake <= 0:
+            #    roioverspan = 0
+            #else:
+            #    roioverspan = pool_lifetime_rewards / ((pool_lifetime_stake - pool_donestake - block_stake) / compoundingperiods)
+            #ros = math.pow(roioverspan + 1, 1 / (compoundingperiods / (365 / 5))) - 1
+            #if block_stake_epoch_prev == 0:
+            #    current_ros = 0
+            #else:
+            #    current_ros = math.pow((delegator_rewards / block_stake_epoch_prev) + 1, 365 / 5) - 1
+            #if block_stake_epoch == 0:
+            #    estimated_ros = 0
+            #else:
+            #    estimated_ros = math.pow((forecasted_reward / block_stake_epoch) + 1, 365 / 5) - 1
 
-            pool_stake = block_stake
             n = total_block * (1 - d)
-            p = pool_stake / genesis_total_stake
+            p = block_stake_next / genesis_total_stake
             var = n * p * (1 - p)
 
             tmp_r_values = list(range(300))
@@ -692,7 +753,8 @@ class EventHandler:
 
             estimated_blocks = round(var, 2)  
 
-            saturation = (pool_stake / (total_circ_supply  / 500)) * 100
+            saturation = (livestake / (total_circ_supply  / 500)) * 100
+            print(f"Pool: {pool_name} - stake: {round(livestake / 1000000)} - total_circulation: {round(total_circ_supply / 1000000)} - saturation: {round(saturation, 2)}")
 
             fig = px.bar(x=r_values, y=dist, template='plotly_dark')
             fig.update_layout(
@@ -706,43 +768,44 @@ class EventHandler:
             img_bytes = fig.to_image(format="png")
 
             for chat_id in chat_ids:       
-                message_type = self.db.get_option_value(chat_id, ticker, 'epoch_summary')
+                message_type = self.db.get_option_value_poolid(chat_id, pool, 'epoch_summary')
 
                 if message_type:
                     message = f'*[ {ticker} ] Epoch {epoch} summary {e.globe}*\n' 
                     message += f'{pool_name}\n'
                     message += f'\n' 
-                    message += f"Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch / 1000000)).replace(' ', '')}`\n" 
+                    message += f"Active stake: `{e.ada}{c.set_prefix(round(block_stake / 1000000)).replace(' ', '')}`\n" 
                     message += f'Blocks minted: `{blocks_minted}'
-                    if assigned_blocks is not None:
+                    if assigned_blocks is not None and assigned_blocks != 0:
                         message += f"/{assigned_blocks} {e.star if blocks_minted == assigned_blocks and blocks_minted != 0 else ''}"
                     message += f'`\n' 
-                    message += f'Total stakeholders: `{total_delegators}`\n' 
+                    message += f'Total stakeholders: `{delegators}`\n' 
                     message += f'\n'
-                    message += f'Lifetime ROS: `{round(ros * 100, 2)}%`\n'
+                    message += f'Lifetime ROS: `{round(current_lifetime_ros * 100, 2)}%`\n'
                     message += f"Live stake: `{e.ada}{c.set_prefix(round(livestake / 1000000)).replace(' ', '')}`\n" 
                     message += f'Pool Saturation: `{round(saturation, 2)}%`\n' 
                     message += f'\n' 
                     message += f'*Rewards for epoch {epoch - 1}*\n' 
-                    message += f"  Active stake: `{e.ada}{c.set_prefix(round(block_stake_epoch_prev / 1000000)).replace(' ', '')}`\n"
-                    message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(delegator_rewards / 1000000)).replace(' ', '')}`\n" 
-                    message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(pool_rewards / 1000000)).replace(' ', '')}`\n" 
+                    message += f"  Active stake: `{e.ada}{c.set_prefix(round(block_stake_prev / 1000000)).replace(' ', '')}`\n"
+                    message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(current_rewards / 1000000)).replace(' ', '')}`\n" 
+                    message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(current_tax / 1000000)).replace(' ', '')}`\n" 
                     message += f'  Stakeholder ROS: `{round(current_ros * 100, 2)}%`\n'
                     message += f'\n' 
                     message += f'*Estimated rewards for epoch {epoch}*\n' 
                     message += f"  Stakeholder rewards: `{e.ada}{c.set_prefix(round(forecasted_reward / 1000000)).replace(' ', '')}`\n" 
                     message += f"  Pool rewards: `{e.ada}{c.set_prefix(round(forecasted_tax / 1000000)).replace(' ', '')}`\n"
-                    message += f'  Stakeholder ROS: `{round(estimated_ros * 100, 2)}%`\n' 
+                    message += f'  Stakeholder ROS: `{round(forecasted_ros * 100, 2)}%`\n' 
                     message += f'\n' 
                     message += f'Estimated blocks epoch {epoch + 1}: `{estimated_blocks}`\n' 
                     message += f'\n' 
                     message += f'_This Bot is brought to you by_ *[ ETR ]*'
+
                     if message_type == 2:
                         self.tg.send_message(message, chat_id, silent=True)
                     else:
                         self.tg.send_message(message, chat_id)
 
-                    message_type = self.db.get_option_value(chat_id, ticker, 'block_estimation')
+                    message_type = self.db.get_option_value_poolid(chat_id, pool, 'block_estimation')
                     if not message_type:
                         continue
                     #buf.seek(0)

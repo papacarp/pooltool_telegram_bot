@@ -41,7 +41,9 @@ def get_new_ticker_file():
 
 def handle_wallet_newpool(db):
     data = get_new_ticker_file()
-    
+    with open('files/tickers.json', 'w') as f:
+        f.write(json.dumps(data))
+        
     if data == 'error':
         print("Could not get new ticker file")
 

@@ -121,9 +121,23 @@ class DBHelper:
         except Exception as e:
             print(f'Could not get options for: {chat_id}, {ticker}, {option_type} - ERROR : {e}')
 
-    def update_option(self, chat_id, ticker, option_type, value):
+    def get_option_value_poolid(self, chat_id, pool_id, option_type):
+        stmt = f"SELECT {option_type} FROM user_pool WHERE chat_id = (?) AND pool_id = (?)"
+        args = (chat_id, pool_id)
+        try:
+            return [x[0] for x in self.conn.execute(stmt, args)][0]
+        except Exception as e:
+            print(f'Could not get options for: {chat_id}, {pool_id}, {option_type} - ERROR : {e}')
+
+    def update_option_old(self, chat_id, ticker, option_type, value):
         stmt = f"UPDATE user_pool SET {option_type} = (?) WHERE chat_id = (?) AND ticker = (?)"
         args = (value, chat_id, ticker)
+        self.conn.execute(stmt, args)
+        self.conn.commit()
+
+    def update_option(self, chat_id, pool_id, option_type, value):
+        stmt = f"UPDATE user_pool SET {option_type} = (?) WHERE chat_id = (?) AND pool_id = (?)"
+        args = (value, chat_id, pool_id)
         self.conn.execute(stmt, args)
         self.conn.commit()
 
@@ -142,7 +156,7 @@ class DBHelper:
             return None
 
     def get_pool_id_from_ticker(self, ticker):
-        stmt = "SELECT pool_id FROM pools WHERE ticker = (?)"
+        stmt = "SELECT pool_id FROM pools WHERE ticker = (?) COLLATE NOCASE"
         args = (ticker,)
         return [x[0] for x in self.conn.execute(stmt, args)]
 
@@ -203,10 +217,10 @@ class DBHelper:
         args = (pool_id,)
         self.conn.execute(stmt, args)
         self.conn.commit()
-
-    def delete_user_reward(self, addr):
-        stmt = "DELETE FROM user_reward WHERE reward_addr = (?)"
-        args = (addr,)
+    
+    def delete_user_reward(self, chat_id, addr):
+        stmt = "DELETE FROM user_reward WHERE chat_id = (?) AND reward_addr = (?)"
+        args = (chat_id, addr,)
         self.conn.execute(stmt, args)
         self.conn.commit()
 

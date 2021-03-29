@@ -80,29 +80,16 @@ class TelegramHandler:
             message += f"{tickers[i]} - {pool_name}\n"
         return message
 
+    def get_list_of_reward_addr(self, reward_addrs):
+        message = "List of addresses you watch:\n\n"
+        for addr in reward_addrs:
+            message += f"{addr}\n\n"
+        return message
+
     def send_option_type(self, chat):
         keyboard = self.tg.build_keyboard(self.options)
         self.tg.send_message('Select option to change', chat, keyboard)
-
-    def handle_option_start(self, chat, tickers):
-        self.options_string_builder[chat] = {}
-        self.options_string_builder[chat]['string'] = ' '
-        self.options_string_builder[chat]['next'] = 'option_pool'
-
-#        keyboard_list = []
-#        ptdb = pooltool_dbhelper.PoolToolDb()
-#        for i in range(0, len(tickers)):
-#            pool_name = ptdb.get_pool_name(pool_ids[i])
-#            if len(pool_name) > 20:
-#                pool_name = pool_name[:20] + "..."
-#            pool_name = c.deEmojify(pool_name)
-#            pool_name = pool_name.replace("#", "")
-#            keyboard_list.append(f"{tickers[i]} - {pool_name}")
-
-        tickers.append('QUIT')
-        keyboard = self.tg.build_keyboard(tickers)
-        self.tg.send_message("Select pool", chat, keyboard)
-    
+  
     def validate_option_type(self, type):
         for option in self.options:
             if type == option.upper():
@@ -129,22 +116,6 @@ class TelegramHandler:
         else:
             return 'Off'
 
-    def get_current_options(self, chat, text):
-        if len(text):
-            options_string = f'\\[ {text[0]} ] Options:\n' \
-                             f'\n' \
-                             f"Block minted: {self.convert_option_value(self.db.get_option_value(chat, text[0], 'block_minted'))}\n" \
-                             f"Pool change: {self.convert_option_value(self.db.get_option_value(chat, text[0], 'pool_change'))}\n" \
-                             f"Award: {self.convert_option_value(self.db.get_option_value(chat, text[0], 'award'))}\n" \
-                             f"Stake change: {self.convert_option_value(self.db.get_option_value(chat, text[0], 'stake_change'))}\n" \
-                             f"Stake change threshold: {c.set_prefix(self.db.get_option_value(chat, text[0], 'stake_change_threshold'))}\n" \
-                             f"Block Estimation: {self.convert_option_value(self.db.get_option_value(chat, text[0], 'block_estimation'))}"
-            return options_string
-        return ''
-
-    def update_option(self, chat, text, new_value):
-        self.db.update_option(chat, text[0], text[1], new_value)
-
     def adjust_string_if_duplicate(self, text):
         list = text.split(' ')
         if len(list) > 1:
@@ -156,12 +127,6 @@ class TelegramHandler:
                     new_list.extend([' '.join([list[0], list[1]]), list[2]])
                 return new_list
         return list
-
-    def go_back_to_option_type(self, chat):
-        self.send_option_type(chat)
-        tmp_list = self.adjust_string_if_duplicate(self.options_string_builder[chat]['string'])
-        self.options_string_builder[chat]['string'] = tmp_list[0]
-        self.options_string_builder[chat]['next'] = 'option_type'
 
     def send_option_stake_threshold(self, chat):
         thresholds = [c.set_prefix(x) for x in [1000, 10000, 100000, 1000000, 10000000]]
@@ -227,30 +192,6 @@ class TelegramHandler:
             self.options_string_builder[chat] = {}
             self.options_string_builder[chat]['type'] = 'adding_duplicate'
             self.options_string_builder[chat]['pool_ids'] = pool_id
-        # if len(text) > 1:
-        #     try:
-        #         number = int(text[1])
-        #         if len(pool_id) > number >= 0:
-        #             text = f'{text[0]} {text[1]}'
-        #             self.on_ticker_valid(text, number, chat, pool_id)
-        #         else:
-        #             raise Exception("Please enter a number that fit the provided listing!")
-        #     except Exception as e:
-        #         message = "Please enter a valid ticker"
-        #         self.tg.send_message(message, chat)
-        #         return
-        # else:
-        #     count = 0
-        #     pool_ids = ''
-        #     for pool in pool_id:
-        #         pool_ids = pool_ids + f'{count}. {pool[:5]}...{pool[len(pool) - 5:]}\n'
-        #         count += 1
-        #     message = "There's more than one pool with this ticker!\n" \
-        #               "\n" \
-        #               f"{pool_ids}\n" \
-        #               f"Please specify which pool you want listed, eg.\n" \
-        #               f"{text[0]} x, where x is the listing number"
-        #     self.tg.send_message(message, chat)
 
     def handle_new_pool_id(self, pool_id, chat):
         try:
@@ -297,12 +238,36 @@ class TelegramHandler:
         keyboard = self.tg.build_keyboard(self.states)
         self.tg.send_message('Select new state', chat, keyboard)
 
-    def handle_next_option_step(self, chat, text, tickers):
+    def go_back_to_option_type(self, chat): 
+        self.send_option_type(chat)
+        self.options_string_builder[chat]['next'] = 'option_type'
+
+    def get_current_options(self, chat, pool_id, pool_name):
+        if len(pool_id):
+            options_string = f'\\[ {pool_name} ] Options:\n' \
+                                f'\n' \
+                                f"Block minted: {self.convert_option_value(self.db.get_option_value_poolid(chat, pool_id, 'block_minted'))}\n" \
+                                f"Pool change: {self.convert_option_value(self.db.get_option_value_poolid(chat, pool_id, 'pool_change'))}\n" \
+                                f"Award: {self.convert_option_value(self.db.get_option_value_poolid(chat, pool_id, 'award'))}\n" \
+                                f"Stake change: {self.convert_option_value(self.db.get_option_value_poolid(chat, pool_id, 'stake_change'))}\n" \
+                                f"Stake change threshold: {c.set_prefix(self.db.get_option_value_poolid(chat, pool_id, 'stake_change_threshold'))}\n" \
+                                f"Block Estimation: {self.convert_option_value(self.db.get_option_value_poolid(chat, pool_id, 'block_estimation'))}"
+            return options_string
+        return ''
+
+    def handle_next_option_step(self, chat, text, tickers, pool_ids):
         next_step = self.options_string_builder[chat]['next']
         if next_step == 'option_pool':
-            if text in tickers:
+            try:
+                pool_id = self.options_string_builder[chat][text]
+            except:
+                pool_id = ''
+            if pool_id in pool_ids:
+                ptdb = pooltool_dbhelper.PoolToolDb()
+                pool_name = ptdb.get_pool_name(self.options_string_builder[chat][text])
                 self.send_option_type(chat)
-                self.options_string_builder[chat]['string'] = text
+                self.options_string_builder[chat]['chosen_pool_id'] = pool_id
+                self.options_string_builder[chat]['chosen_pool_name'] = pool_name
                 self.options_string_builder[chat]['next'] = 'option_type'
             elif text == 'QUIT':
                 del self.options_string_builder[chat]
@@ -311,28 +276,26 @@ class TelegramHandler:
             else:
                 message = "Not a valid pool, try again!"
                 self.tg.send_message(message, chat)
-                self.handle_option_start(chat, tickers)
+                self.handle_option_start(chat, tickers, pool_ids)
         elif next_step == 'option_type':
             if self.validate_option_type(text):
                 if text == 'SEE OPTIONS':
-                    message = self.get_current_options(chat,
-                                                       self.adjust_string_if_duplicate(
-                                                           self.options_string_builder[chat]['string']))
+                    message = self.get_current_options(chat, self.options_string_builder[chat]['chosen_pool_id'], self.options_string_builder[chat]['chosen_pool_name'])
                     if not message == '':
                         self.tg.send_message(message, chat)
                     self.go_back_to_option_type(chat)
                     return
                 elif text == 'BACK':
-                    self.handle_option_start(chat, tickers)
+                    self.handle_option_start(chat, tickers, pool_ids)
                     return
                 elif text == 'Stake Change Threshold'.upper():
                     self.send_option_stake_threshold(chat)
                     self.options_string_builder[chat]['next'] = 'option_threshold'
+                    self.options_string_builder[chat]['option_type'] = 'stake_change_threshold'
                 else:
                     self.send_option_state(chat)
                     self.options_string_builder[chat]['next'] = 'option_state'
-                self.options_string_builder[chat]['string'] = ' '.join(
-                    [self.options_string_builder[chat]['string'], text.replace(' ', '_')])
+                    self.options_string_builder[chat]['option_type'] = text.replace(' ', '_').lower()
             else:
                 message = "Not a possible option type, try again!"
                 self.tg.send_message(message, chat)
@@ -340,41 +303,56 @@ class TelegramHandler:
         elif next_step == 'option_state':
             if self.validate_option_state(text):
                 if text == 'ENABLE':
-                    # options_string_builder[chat]['string'] = ' '.join([options_string_builder[chat]['string'], '1'])
-                    self.update_option(chat,
-                                       self.adjust_string_if_duplicate(self.options_string_builder[chat]['string']), 1)
+                    self.db.update_option(chat, self.options_string_builder[chat]['chosen_pool_id'], 
+                                                self.options_string_builder[chat]['option_type'], 
+                                                1)
                 elif text == 'DISABLE':
-                    # options_string_builder[chat]['string'] = ' '.join([options_string_builder[chat]['string'], '0'])
-                    self.update_option(chat,
-                                       self.adjust_string_if_duplicate(self.options_string_builder[chat]['string']), 0)
+                    self.db.update_option(chat, self.options_string_builder[chat]['chosen_pool_id'], 
+                                                self.options_string_builder[chat]['option_type'], 
+                                                0)
                 elif text == 'SILENCE':
-                    # options_string_builder[chat]['string'] = ' '.join([options_string_builder[chat]['string'], '2'])
-                    self.update_option(chat,
-                                       self.adjust_string_if_duplicate(self.options_string_builder[chat]['string']), 2)
-                message = self.get_current_options(chat,
-                                                   self.adjust_string_if_duplicate(
-                                                       self.options_string_builder[chat]['string']))
+                    self.db.update_option(chat, self.options_string_builder[chat]['chosen_pool_id'], 
+                                                    self.options_string_builder[chat]['option_type'], 
+                                                    2)
+                message = self.get_current_options(chat, self.options_string_builder[chat]['chosen_pool_id'], self.options_string_builder[chat]['chosen_pool_name'])
                 self.tg.send_message(message, chat)
                 self.go_back_to_option_type(chat)
-                # del options_string_builder[chat]
             else:
                 message = "Not a possible option state, try again!"
                 self.tg.send_message(message, chat)
                 self.send_option_state(chat)
         elif next_step == 'option_threshold':
             if self.validate_option_threshold(text):
-                self.update_option(chat, self.adjust_string_if_duplicate(self.options_string_builder[chat]['string']),
-                                   self.convert_values_from_prefix(text))
-                message = self.get_current_options(chat,
-                                                   self.adjust_string_if_duplicate(
-                                                       self.options_string_builder[chat]['string']))
+                self.db.update_option(chat, self.options_string_builder[chat]['chosen_pool_id'], 
+                                            self.options_string_builder[chat]['option_type'], 
+                                            self.convert_values_from_prefix(text))
+                message = self.get_current_options(chat, self.options_string_builder[chat]['chosen_pool_id'], self.options_string_builder[chat]['chosen_pool_name'])
                 self.tg.send_message(message, chat)
                 self.go_back_to_option_type(chat)
-                # del options_string_builder[chat]
             else:
                 message = "Not a possible option for threshold, try again!"
                 self.tg.send_message(message, chat)
                 self.send_option_stake_threshold(chat)
+
+    def handle_option_start(self, chat, tickers, pool_ids):
+        self.options_string_builder[chat] = {}
+        self.options_string_builder[chat]['string'] = ' '
+        self.options_string_builder[chat]['next'] = 'option_pool'
+
+        keyboard_list = []
+        ptdb = pooltool_dbhelper.PoolToolDb()
+        for i in range(0, len(tickers)):
+            pool_name = ptdb.get_pool_name(pool_ids[i])
+            if len(pool_name) > 20:
+                pool_name = pool_name[:20] + "..."
+            pool_name = c.deEmojify(pool_name).rstrip()
+            pool_name = pool_name.replace("#", "")
+            keyboard_list.append(f"{tickers[i]} - {pool_name}")
+            self.options_string_builder[chat][f"{tickers[i]} - {pool_name.upper()}"] = pool_ids[i]
+
+        keyboard_list.append('QUIT')
+        keyboard = self.tg.build_keyboard(keyboard_list)
+        self.tg.send_message("Select pool", chat, keyboard)
 
     def handle_reward(self, chat, text):
         text = text.split(' ')
@@ -401,7 +379,7 @@ class TelegramHandler:
                 return
         addr = self.db.get_reward_addr_from_chat_id(chat)
         if reward_addr in addr:
-            self.db.delete_user_reward(reward_addr)
+            self.db.delete_user_reward(chat, reward_addr)
             addrs = self.db.get_reward_addr_from_chat_id(chat)
             message = "List of addresses you watch:\n\n" + "\n".join(addrs)
             self.tg.send_message(message, chat)
@@ -431,7 +409,7 @@ class TelegramHandler:
                         if 'type' in self.options_string_builder[chat] and self.options_string_builder[chat]['type'] == 'adding_duplicate':
                             self.handle_duplicate_ticker(text, chat, None, self.options_string_builder[chat]['type'])
                         else:
-                            self.handle_next_option_step(chat, text, tickers)
+                            self.handle_next_option_step(chat, text, tickers, pool_ids)
                         continue
                     if text == "/DELETE":
                         if not tickers:
@@ -457,11 +435,15 @@ class TelegramHandler:
                     elif text == "/HELP":
                         self.handle_help(chat)
                     elif text == "/OPTION":
-                        self.handle_option_start(chat, tickers)
+                        self.handle_option_start(chat, tickers, pool_ids)
                     elif "/REWARD" in text:
                         self.handle_reward(chat, text)
                     elif "/POOLID" in text:
                         self.handle_new_pool_on_pool_id(chat, text)
+                    elif "/LISTREWARD" in text:
+                        reward_addrs = self.db.get_reward_addr_from_chat_id(chat)
+                        message = self.get_list_of_reward_addr(reward_addrs)
+                        self.tg.send_message(message, chat)
                     elif "/LIST" in text:
                         message = self.get_list_of_pools(tickers, pool_ids)
                         self.tg.send_message(message, chat)

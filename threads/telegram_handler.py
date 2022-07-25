@@ -358,7 +358,7 @@ class TelegramHandler:
         text = text.split(' ')
         if len(text) == 1:
             message = "How to add a stake address:\n" \
-                      "/reward <stake address>"
+                      "/reward <stake address(Bech32)>"
             self.tg.send_message(message, chat)
             return
         if len(text) < 2:
@@ -366,15 +366,21 @@ class TelegramHandler:
             return
         ptdb = pooltool_dbhelper.PoolToolDb()
         reward_addr = text[1].lower()
+        if not reward_addr.isascii():
+            message = "Please use ASCII characters"
+            self.tg.send_message(message, chat)
+            return
         try:
-            reward_addr_json = json.loads(subprocess.check_output(f'echo {reward_addr} | ~/wallet/cardano-wallet-shelley-linux64/cardano-address address inspect', shell=True).decode('utf-8'))
+            out = subprocess.check_output(f'echo {reward_addr} | /home/kuno/.cabal/bin/cardano-address address inspect', shell=True).decode('utf-8')
+            print(out)
+            reward_addr_json = json.loads(out)
             stake_key_hash = reward_addr_json['stake_key_hash']
         except Exception as e:
             if ptdb.does_rewards_addr_exist(reward_addr):
                 stake_key_hash = reward_addr
             else:
-                message = "Please use a valid stake address!"
-                print("Please use a valid stake address!")
+                message = "Please use a valid stake address! (Bech32)"
+                #print("Please use a valid stake address!")
                 self.tg.send_message(message, chat)
                 return
         addr = self.db.get_reward_addr_from_chat_id(chat)
@@ -397,7 +403,7 @@ class TelegramHandler:
         if 'result' in updates:
             for update in updates["result"]:
                 if 'message' in update:
-                    print(update)
+                    #print(update)
                     if 'text' not in update["message"]:
                         continue
                     text = update["message"]["text"].upper()

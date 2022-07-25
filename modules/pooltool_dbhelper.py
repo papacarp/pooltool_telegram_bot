@@ -26,7 +26,7 @@ class PoolToolDb:
             return False
         epoch, _, _ = self.get_genesis_data_for_summary()
         try:
-            with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{epoch}/S{addr[:1]}/{addr}.json") as url:
+            with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{epoch}/S{addr[:1]}/{addr}/amount.json") as url:
                 data = json.loads(url.read().decode())
         except urllib.error.HTTPError as e:
             print(e)
@@ -46,14 +46,14 @@ class PoolToolDb:
         for i in range(0,3):
             while True:
                 try:        
-                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{epoch}/S{addr[:1]}/{addr}.json") as url:
-                        data = json.loads(url.read().decode())
+                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{epoch}/S{addr[:1]}/{addr}/stakeRewards.json") as url:
+                        stakeRewards = json.loads(url.read().decode())
                 except Exception:
                     continue
                 break
-        if data is None:
+        if stakeRewards is None:
             return None
-        return data['stakeRewards']
+        return stakeRewards
         #self.cur.execute("select stake_rewards from pt_addresses_history where stake_address=lower(%s) and epoch=%s", [addr, epoch])
         #row = self.cur.fetchone()
         #if row is None:
@@ -67,14 +67,15 @@ class PoolToolDb:
             for i in range(0,3):
                 while True:
                     try:        
-                        with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{e}/S{addr[:1]}/{addr}.json") as url:
-                            data = json.loads(url.read().decode())
+                        with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{e}/S{addr[:1]}/{addr}/stakeRewards.json") as url:
+                            stakeRewards = json.loads(url.read().decode())
                     except Exception:
                         continue
                     break
-            if data is None:
+            if stakeRewards is None:
+                stakeRewards = 0
                 continue
-            sum += data['stakeRewards']
+            sum += stakeRewards
         #self.cur.execute("select sum(operator_rewards) from pt_addresses_history where stake_address=lower(%s)", [addr])
         #row = self.cur.fetchone()
         #return row[0]
@@ -87,18 +88,17 @@ class PoolToolDb:
         for i in range(0,3):
             while True:
                 try:        
-                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{epoch}/S{addr[:1]}/{addr}.json") as url:
-                        data = json.loads(url.read().decode())
+                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_history/{epoch}/S{addr[:1]}/{addr}/operatorRewards.json") as url:
+                        operatorRewards = json.loads(url.read().decode())
                 except Exception:
                     continue
                 break
-        if data is None:
+        if operatorRewards is None:
             return 0
         #self.cur.execute("select operator_rewards from pt_addresses_history where stake_address=lower(%s) and epoch=%s", [addr, epoch])
         #row = self.cur.fetchone()
         #return row[0]
-        operator_rewards = data['operatorRewards'] if 'operatorRewards' in data else 0
-        return operator_rewards
+        return operatorRewards
     
     def get_total_operator_rewards(self, addr, epoch): #TODO
         sum = 0
@@ -120,8 +120,8 @@ class PoolToolDb:
         for i in range(0,3):
             while True:
                 try:        
-                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_pools/{pool_id}.json") as url:
-                        data = json.loads(url.read().decode())
+                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_pools/{pool_id}/n.json") as url:
+                        name = json.loads(url.read().decode())
                 except Exception:
                     continue
                 break
@@ -129,9 +129,9 @@ class PoolToolDb:
         #row = self.cur.fetchone()
         #if row is None:
         #    return ''
-        if data is None:
+        if name is None:
             return ''
-        return data['n']
+        return name
 
     #def get_block_stake_for_epoch(self, pool_id, epoch):
     #    self.cur.execute("select blockstake from pool_epoch_data where \"poolPubKey\"=lower(%s) and epoch=%s", [pool_id, epoch])
@@ -192,8 +192,25 @@ class PoolToolDb:
     #    self.cur.execute("select blockstake from pools where \"poolPubKey\"=%s", [pool_id])
     #    row = self.cur.fetchone()
     #    return row[0]
-    
-    def get_total_delegators(self, pool_id, epoch):
+    def is_pool_retired(self, pool_id, epoch):
+        for i in range(0,3):
+            while True:
+                try:
+                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_pools/{pool_id}/retiredEpoch.json") as url:
+                        data = json.loads(url.read().decode())
+                except Exception:
+                    continue
+                break
+
+        print(data)
+        if data is None:
+            return False
+        #self.cur.execute("select operator_rewards from pt_addresses_history where stake_address=lower(%s) and epoch=%s", [addr, epoch])
+        #row = self.cur.fetchone()
+        #return row[0]
+        return epoch > data
+
+    def get_total_delegators(self, pool_id, epoch): # NOTE: not used
         for i in range(0,3):
             while True:
                 try:        
@@ -213,7 +230,7 @@ class PoolToolDb:
     #    row = self.cur.fetchone()
     #    return row['fcp1_epoch_tax'], row['fcp1_epoch_rewards']
 
-    def get_pools_data_for_summary(self, pool_id):
+    def get_pools_data_for_summary(self, pool_id): # NOTE: not used
         for i in range(0,3):
             while True:
                 try:        
@@ -233,7 +250,7 @@ class PoolToolDb:
         active_stake = data['activeStake'] if 'activeStake' in data else 0
         return livestake, first_epoch, lifetime_rewards, lifetime_stake, done_stake, active_stake
 
-    def get_pool_epoch_data_for_summary(self, pool_id, epoch):
+    def get_pool_epoch_data_for_summary(self, pool_id, epoch): # NOTE: not used
         for i in range(0,3):
             while True:
                 try:        
@@ -257,7 +274,7 @@ class PoolToolDb:
         #    return -1, -1, -1, -1
         return blockstake, epoch_blocks, tax, rewards
     
-    def get_pool_epoch_rewards(self, pool_id, epoch):
+    def get_pool_epoch_rewards(self, pool_id, epoch): # NOTE: not used
         for i in range(0,3):
             while True:
                 try:        
@@ -360,20 +377,20 @@ class PoolToolDb:
 
         return epoch_blocks, delegators, assigned_slots
 
-    def get_livestake(self):
+    def get_livestake(self, addr):
         for i in range(0,3):
             while True:
                 try:
-                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_pool_columns/livestake.json") as url:
-                        data = json.loads(url.read().decode())
+                    with urllib.request.urlopen(f"https://pegasus-pool.firebaseio.com/Mainnet/stake_pools/{addr}/ls.json") as url:
+                        livestake = json.loads(url.read().decode())
                 except Exception:
                     continue
                 break
 
-        if data is None:
+        if livestake is None:
             return 0
         #self.cur.execute("select operator_rewards from pt_addresses_history where stake_address=lower(%s) and epoch=%s", [addr, epoch])
         #row = self.cur.fetchone()
         #return row[0]
-        return data
+        return livestake
         

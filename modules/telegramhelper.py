@@ -93,7 +93,7 @@ class TelegramHelper:
         files = {'photo': image}
         data = {'chat_id': chat_id}
         r = requests.post(url, files=files, data=data)
-        print(r.status_code, r.reason, r.content)
+        #print(r.status_code, r.reason, r.content)
 
         if c.DEBUG:
             print(f"Sending photo: {c.get_current_time_millis() - millis}")

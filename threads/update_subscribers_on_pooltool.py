@@ -14,4 +14,4 @@ class UpdateSubscribers:
             number_of_subscribers = len(self.db.get_chat_ids_from_pool_id(pool_id))
             ptdb.update_pooltool_db(pool_id, number_of_subscribers)
             
-        print("Subscribers updated to pooltool")
+        #print("Subscribers updated to pooltool")

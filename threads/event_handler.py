@@ -1,5 +1,5 @@
 import time
-#import boto3
+import boto3
 import json
 #import matplotlib.pyplot as plt
 import math
@@ -7,28 +7,28 @@ import io
 import threading
 import subprocess
 import plotly.express as px
-import plotly.io
+#import plotly.io
 
 from scipy.stats import binom
-#from os import environ
+from os import environ
 
 from modules.emoji import Emoji as e
 from modules import common as c
 from modules import pooltool_dbhelper
 
-plotly.io.orca.config.executable = '/usr/local/bin/orca'
-plotly.io.orca.config.save()
+#plotly.io.orca.config.executable = '/usr/local/bin/orca'
+#plotly.io.orca.config.save()
 
 class EventHandler:
     def __init__(self, db, tg):
         self.db = db
         self.tg = tg
 
-        #environ["AWS_PROFILE"] = "bot_iam"
-        #self.client = boto3.client('sts')
-        #self.session = boto3.Session(profile_name='bot_iam')
-        #self.sqs = boto3.client('sqs')
-        #self.queue_url = 'https://sqs.us-west-2.amazonaws.com/637019325511/pooltoolevents.fifo'
+        environ["AWS_PROFILE"] = "bot_iam"
+        self.client = boto3.client('sts')
+        self.session = boto3.Session(profile_name='bot_iam')
+        self.sqs = boto3.client('sqs')
+        self.queue_url = 'https://sqs.us-west-2.amazonaws.com/637019325511/pooltoolevents.fifo'
 
         self.plot_number = 0
 
@@ -201,8 +201,8 @@ class EventHandler:
                 message = f"\\[ {ticker} ] Pool change {e.warning} Margin\n" \
                           f'{pool_name}\n' \
                           f"\n" \
-                          f"From: `{float(data['change']['margin']['old_value'])}%`\n" \
-                          f"To: `{float(data['change']['margin']['new_value'])}%`\n" \
+                          f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
+                          f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -211,8 +211,8 @@ class EventHandler:
                 message = f"\\[ {ticker} ] Pool change {e.party} Margin\n" \
                           f'{pool_name}\n' \
                           f"\n" \
-                          f"From: `{float(data['change']['margin']['old_value'])}%`\n" \
-                          f"To: `{float(data['change']['margin']['new_value'])}%`\n" \
+                          f"From: `{float(data['change']['margin']['old_value']) * 100}%`\n" \
+                          f"To: `{float(data['change']['margin']['new_value']) * 100}%`\n" \
                           f"\n" \
                           f"More info at:\n" \
                           f"[Pooltool]({pooltool_url})\n" \
@@ -288,8 +288,7 @@ class EventHandler:
 
         ptdb = pooltool_dbhelper.PoolToolDb()
         total_circ_supply = 45000000000000000 - self.reserves
-        livestake_data = ptdb.get_livestake()
-        livestake = livestake_data[pool_id]
+        livestake = ptdb.get_livestake(pool_id)
         saturation = (livestake / (total_circ_supply  / 500)) * 100
 
         if delegations > new_delegations:
@@ -600,7 +599,7 @@ class EventHandler:
             addrs = self.db.get_reward_addr_from_chat_id(chat_id)
             for addr in addrs:
                 try:
-                    reward_addr_json = json.loads(subprocess.check_output(f'echo {addr} | ~/wallet/cardano-wallet-shelley-linux64/cardano-address address inspect', shell=True).decode('utf-8'))
+                    reward_addr_json = json.loads(subprocess.check_output(f'echo {addr} | /home/kuno/.cabal/bin/cardano-address address inspect', shell=True).decode('utf-8'))
                     stake_key_hash = reward_addr_json['stake_key_hash']
                 except:
                     if ptdb.does_rewards_addr_exist(addr):
@@ -659,13 +658,18 @@ class EventHandler:
         stake_data = ptdb.get_stake_data(epoch)
         stake_data_next = ptdb.get_stake_data(epoch + 1)
 
-        livestake_data = ptdb.get_livestake()
 
         #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
         for i, pool in enumerate(pools):
+
+            if ptdb.is_pool_retired(pool, epoch):
+                print(f"{pool} is retired!")
+                continue
+            
+            livestake = ptdb.get_livestake(pool)
             
             print(f"Summary Progess: {i} / {len(pools)}")
-            print(f"Starting epoch summary for pool: {pool}")
+            #print(f"Starting epoch summary for pool: {pool}")
 
             ticker = self.db.get_ticker_from_pool_id(pool)
             if len(ticker) < 1:
@@ -675,7 +679,7 @@ class EventHandler:
             pool_name = ptdb.get_pool_name(pool)  
             if len(pool_name) > 20:
                 pool_name = pool_name[:20] + "..."
-            #chat_ids = [488598281, 509234811]      #Papa = 509234811
+            #chat_ids = [488598281]#, 509234811]      #Papa = 509234811
 
             try:
                 if pool in cur_reward_data:
@@ -712,10 +716,6 @@ class EventHandler:
                     block_stake_next = 0
 
                 blocks_minted, delegators, assigned_blocks = ptdb.get_pool_stats(pool, epoch)
-                if pool in livestake_data:
-                    livestake = livestake_data[pool]
-                else:
-                    livestake = 0
             except Exception as ex:
                 print(ex)
                 continue
@@ -754,7 +754,7 @@ class EventHandler:
             estimated_blocks = round(var, 2)  
 
             saturation = (livestake / (total_circ_supply  / 500)) * 100
-            print(f"Pool: {pool_name} - stake: {round(livestake / 1000000)} - total_circulation: {round(total_circ_supply / 1000000)} - saturation: {round(saturation, 2)}")
+            #print(f"Pool: {pool_name} - stake: {round(livestake / 1000000)} - total_circulation: {round(total_circ_supply / 1000000)} - saturation: {round(saturation, 2)}")
 
             fig = px.bar(x=r_values, y=dist, template='plotly_dark')
             fig.update_layout(

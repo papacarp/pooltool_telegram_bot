@@ -599,7 +599,7 @@ class EventHandler:
             addrs = self.db.get_reward_addr_from_chat_id(chat_id)
             for addr in addrs:
                 try:
-                    reward_addr_json = json.loads(subprocess.check_output(f'echo {addr} | /home/kuno/.cabal/bin/cardano-address address inspect', shell=True).decode('utf-8'))
+                    reward_addr_json = json.loads(subprocess.check_output(f'echo {addr} | /home/ubuntu/.cabal/bin/cardano-address address inspect', shell=True).decode('utf-8'))
                     stake_key_hash = reward_addr_json['stake_key_hash']
                 except:
                     if ptdb.does_rewards_addr_exist(addr):

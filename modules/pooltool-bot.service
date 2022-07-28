@@ -1,0 +1,16 @@
+[Unit]
+Description=Pooltool Telegram Bot
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+RuntimeMaxSec=604800
+
+User=kuno
+Group=users
+WorkingDirectory=/home/ubuntu/pooltool_telegram_bot/
+ExecStart=/usr/bin/python3 -u /home/ubuntu/pooltool_telegram_bot/main.py
+
+[Install]
+WantedBy=multi-user.target

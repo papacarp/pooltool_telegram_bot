@@ -371,7 +371,7 @@ class TelegramHandler:
             self.tg.send_message(message, chat)
             return
         try:
-            out = subprocess.check_output(f'echo {reward_addr} | /home/kuno/.cabal/bin/cardano-address address inspect', shell=True).decode('utf-8')
+            out = subprocess.check_output(f'echo {reward_addr} | /home/ubuntu/.cabal/bin/cardano-address address inspect', shell=True).decode('utf-8')
             print(out)
             reward_addr_json = json.loads(out)
             stake_key_hash = reward_addr_json['stake_key_hash']
@@ -469,6 +469,8 @@ class TelegramHandler:
         last_update_id = None
         while True:
             updates = self.tg.get_updates(last_update_id)
+            if 'ok' in updates and updates['ok'] and 'result' in updates and len(updates['result']):
+                print(updates)
             if updates is not None:
                 if updates['ok']:
                     if len(updates["result"]) > 0:

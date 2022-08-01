@@ -25,7 +25,7 @@ class TelegramHandler:
                   "\n" \
                   "Please enter the TICKER of the pool(s) you want to follow\n" \
                   "\n" \
-                  "Example: ETR\n" \
+                  "Example: LOVE\n" \
                   "\n" \
                   "In order to remove a TICKER from the list, you have two options:\n" \
                   "1. Enter the TICKER again\n" \
@@ -38,8 +38,6 @@ class TelegramHandler:
                   "\n" \
                   "For more information, enter \"/HELP\"\n" \
                   "\n" \
-                  "_This pooltool bot was created for pooltool by Kuno Heltborg_ *[ ETR ]* _(Erik The Red)_\n" \
-                  "\n" \
                   "*NOTE: This Bot is not case sensitive! text in upper- and lower case work!*"
         self.tg.send_message(message, chat)
 
@@ -47,7 +45,7 @@ class TelegramHandler:
         message = "*Add/Remove pool:*\n" \
                   "Enter ticker of the pool, this will both add the pool to the list or delete if it is already on the list\n" \
                   "\n" \
-                  "Example: ETR\n" \
+                  "Example: LOVE\n" \
                   "\n" \
                   "Or add a pool using pool id: \n" \
                   "\n" \

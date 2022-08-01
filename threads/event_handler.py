@@ -639,6 +639,7 @@ class EventHandler:
                 self.tg.send_message(message, chat_id)
 
     def handle_epoch_summary(self, data):
+        print("processing epoch summary")
         with open('epoch_summary', 'w') as f:
             f.write(json.dumps(data))
         pools = self.db.get_all_subscribed_pool()
@@ -657,11 +658,11 @@ class EventHandler:
         stake_data_prev = ptdb.get_stake_data(epoch - 1)
         stake_data = ptdb.get_stake_data(epoch)
         stake_data_next = ptdb.get_stake_data(epoch + 1)
+        #print(pools)
 
-
-        #pools = ['dcfbfc65083fd8a1d931b826e67549323d4946f02eda20622b618321']
+        #pools = ['6226fce477c40a148f695fcd2de150dbd7566ee30137d7deda8071a4']
         for i, pool in enumerate(pools):
-
+            print(pool)
             if ptdb.is_pool_retired(pool, epoch):
                 print(f"{pool} is retired!")
                 continue
@@ -679,7 +680,8 @@ class EventHandler:
             pool_name = ptdb.get_pool_name(pool)  
             if len(pool_name) > 20:
                 pool_name = pool_name[:20] + "..."
-            #chat_ids = [488598281]#, 509234811]      #Papa = 509234811
+            #print(chat_ids)
+            #chat_ids = [509234811]#, 509234811]      #Papa = 509234811
 
             try:
                 if pool in cur_reward_data:
@@ -797,8 +799,6 @@ class EventHandler:
                     message += f'  Stakeholder ROS: `{round(forecasted_ros * 100, 2)}%`\n' 
                     message += f'\n' 
                     message += f'Estimated blocks epoch {epoch + 1}: `{estimated_blocks}`\n' 
-                    message += f'\n' 
-                    message += f'_This Bot is brought to you by_ *[ ETR ]*'
 
                     if message_type == 2:
                         self.tg.send_message(message, chat_id, silent=True)
@@ -813,7 +813,7 @@ class EventHandler:
                         self.tg.send_image(img_bytes, chat_id)
                     else:
                         self.tg.send_image(img_bytes, chat_id)
-                        
+        print("epoch processing complete")                
 
     def handle_event(self, body):
         data = body['data']
@@ -850,8 +850,9 @@ class EventHandler:
 
         while True:
             event = self.get_aws_event()
+            
             if event != '':
-
+                print(event['Body'])
                 if c.DEBUG:
                     print(f"New event - time since last event: {c.get_current_time_millis() - get_event_millis}")
                     get_event_millis = c.get_current_time_millis()

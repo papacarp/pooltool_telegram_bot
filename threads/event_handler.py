@@ -25,9 +25,9 @@ class EventHandler:
         self.tg = tg
 
         environ["AWS_PROFILE"] = "bot_iam"
-        self.client = boto3.client('sts')
-        self.session = boto3.Session(profile_name='bot_iam')
-        self.sqs = boto3.client('sqs')
+        self.client = boto3.client('sts',region_name='us-west-2')
+        self.session = boto3.Session(profile_name='bot_iam',region_name='us-west-2')
+        self.sqs = boto3.client('sqs',region_name='us-west-2')
         self.queue_url = 'https://sqs.us-west-2.amazonaws.com/637019325511/pooltoolevents.fifo'
 
         self.plot_number = 0

@@ -17,9 +17,10 @@ class PoolToolDb:
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     def update_pooltool_db(self, pool_id, number_of_subs): #TODO
-        self.cur.execute("update pools set pooltoolbot_subscribers=%s where \"pool_id\"=%s",
-                        [number_of_subs, pool_id])
-        self.conn.commit()
+        pass
+        # self.cur.execute("update pools set pooltoolbot_subscribers=%s where \"pool_id\"=%s",
+        #                 [number_of_subs, pool_id])
+        # self.conn.commit()
 
 
     def does_rewards_addr_exist(self, addr): #TODO: Change to use current epoch
